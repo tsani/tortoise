@@ -2,7 +2,41 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveTraversable #-}
 
-module Language.Prism.Module where
+module Language.Prism.Module
+( -- * Declarations
+  Declaration
+, DeclarationF(..)
+, Probability(..)
+, Update(..)
+, Guard
+, GuardF(..)
+, Scope(..)
+  -- * Expressions
+, Expression
+, ExpressionF(..)
+, BinaryOperator(..)
+, Value(..)
+, Start(..)
+, End(..)
+, Name(..)
+  -- ** Value shorthands
+, double
+, int
+  -- ** Relational shorthands
+, equals
+, notEquals
+, lessThanOrEquals
+, not
+, and
+, or
+, lessThan
+, greaterThan
+, greaterThanOrEquals
+  -- * Reexports
+, cata
+, Text
+, Fix(..)
+) where
 
 import Fix
 
@@ -29,6 +63,11 @@ data DeclarationF next
     Name
     [next]
   deriving (Eq, Functor, Ord, Read, Show)
+
+data Scope
+  = Global
+  | Local
+  deriving (Eq, Ord, Read, Show)
 
 newtype Probability = Probability Double
   deriving (Eq, Ord, Read, Show)
@@ -92,11 +131,6 @@ data BinaryOperator
   | Subtract
   | Multiply
   | Divide
-  deriving (Eq, Ord, Read, Show)
-
-data Scope
-  = Global
-  | Local
   deriving (Eq, Ord, Read, Show)
 
 data Value
