@@ -31,6 +31,14 @@ data DeclarationF next
   deriving (Eq, Functor, Ord, Read, Show)
 
 newtype Probability = Probability Double
+  deriving (Eq, Ord, Read, Show)
+
+data Update
+  = Update
+    { updateVar :: Name
+    , updateExpr :: Expression
+    }
+  deriving (Eq, Ord, Read, Show)
 
 type Declaration = Fix DeclarationF
 
@@ -40,6 +48,7 @@ data GuardF next
   | Not next
   | And next next
   | Or next next
+  deriving (Eq, Functor, Ord, Read, Show)
 
 type Guard = Fix GuardF
 
@@ -74,6 +83,7 @@ data ExpressionF next
   = Constant Value
   | Variable Name
   | BinaryOperator BinaryOperator next next
+  deriving (Eq, Ord, Read, Show)
 
 type Expression = Fix ExpressionF
 
@@ -82,19 +92,25 @@ data BinaryOperator
   | Subtract
   | Multiply
   | Divide
+  deriving (Eq, Ord, Read, Show)
 
 data Scope
   = Global
   | Local
+  deriving (Eq, Ord, Read, Show)
 
 data Value
   = IntegerValue Int
   | DoubleValue Double
   | EnumValue Start End
   | Boolean Bool
+  deriving (Eq, Ord, Read, Show)
 
 newtype Start = Start Int
+  deriving (Eq, Ord, Read, Show)
+
 newtype End = End Int
+  deriving (Eq, Ord, Read, Show)
 
 double :: Double -> Value
 double = DoubleValue
@@ -103,3 +119,4 @@ int :: Int -> Value
 int = IntegerValue
 
 newtype Name = Name { unName :: Text }
+  deriving (Eq, Ord, Read, Show)
