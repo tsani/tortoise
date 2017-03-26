@@ -1,21 +1,21 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Language.Prism.Module
 ( -- * Declarations
   Declaration
 , DeclarationF(..)
-, Probability(..)
 , Update(..)
-, Guard
-, GuardF(..)
 , Scope(..)
   -- * Expressions
 , Expression
 , ExpressionF(..)
 , BinaryOperator(..)
 , Value(..)
+, Type(..)
+, typeOf
 , Start(..)
 , End(..)
 , Name(..)
@@ -25,13 +25,13 @@ module Language.Prism.Module
   -- ** Relational shorthands
 , equals
 , notEquals
-, lessThanOrEquals
+, lessThanEquals
 , not
 , and
 , or
 , lessThan
 , greaterThan
-, greaterThanOrEquals
+, greaterThanEquals
   -- * Reexports
 , cata
 , Text
@@ -40,6 +40,7 @@ module Language.Prism.Module
 
 import Fix
 
+import Data.String
 import Data.Text ( Text )
 import qualified Data.Text as T
 
@@ -54,11 +55,12 @@ data DeclarationF next
   | VariableDecl
     Scope
     Name
+    Type
     Value
   | Action
     (Maybe Name)
-    Guard
-    [(Expression, Update)]
+    Expression
+    [(Expression, [Update])]
   | Module
     Name
     [next]
@@ -78,48 +80,40 @@ data Update
 
 type Declaration = Fix DeclarationF
 
-data GuardF next
-  = Equals Expression Expression
-  | LessOrEquals Expression Expression
-  | Not next
-  | And next next
-  | Or next next
-  deriving (Eq, Functor, Ord, Read, Show)
+equals :: Expression -> Expression -> Expression
+equals e1 e2 = Fix (BinaryOperator Equals e1 e2)
 
-type Guard = Fix GuardF
-
-equals :: Expression -> Expression -> Guard
-equals e1 e2 = Fix (Equals e1 e2)
-
-notEquals :: Expression -> Expression -> Guard
+notEquals :: Expression -> Expression -> Expression
 notEquals e1 e2 = not (equals e1 e2)
 
-lessThanOrEquals :: Expression -> Expression -> Guard
-lessThanOrEquals e1 e2 = Fix (LessOrEquals e1 e2)
+lessThanEquals :: Expression -> Expression -> Expression
+lessThanEquals e1 e2 = Fix (BinaryOperator LessThanEquals e1 e2)
 
-not :: Guard -> Guard
+not :: Expression -> Expression
 not = Fix . Not
 
-and :: Guard -> Guard -> Guard
-and g1 g2 = Fix (And g1 g2)
+and :: Expression -> Expression -> Expression
+and g1 g2 = Fix (BinaryOperator And g1 g2)
 
-or :: Guard -> Guard -> Guard
-or g1 g2 = Fix (Or g1 g2)
+or :: Expression -> Expression -> Expression
+or g1 g2 = Fix (BinaryOperator Or g1 g2)
 
-lessThan :: Expression -> Expression -> Guard
-lessThan e1 e2 = lessThanOrEquals e1 e2 `and` not (equals e1 e2)
+lessThan :: Expression -> Expression -> Expression
+lessThan e1 e2 = Fix (BinaryOperator LessThan e1 e2)
 
-greaterThan :: Expression -> Expression -> Guard
-greaterThan e1 e2 = not (lessThanOrEquals e1 e2)
+greaterThan :: Expression -> Expression -> Expression
+greaterThan e1 e2 = Fix (BinaryOperator GreaterThan e1 e2)
 
-greaterThanOrEquals :: Expression -> Expression -> Guard
-greaterThanOrEquals e1 e2 = not (lessThan e1 e2)
+greaterThanEquals :: Expression -> Expression -> Expression
+greaterThanEquals e1 e2 = Fix (BinaryOperator GreaterThan e1 e2)
 
 data ExpressionF next
   = Constant Value
   | Variable Name
   | BinaryOperator BinaryOperator next next
-  deriving (Eq, Ord, Read, Show)
+  | Call Name [next]
+  | Not next
+  deriving (Eq, Functor, Ord, Read, Show)
 
 type Expression = Fix ExpressionF
 
@@ -128,12 +122,18 @@ data BinaryOperator
   | Subtract
   | Multiply
   | Divide
+  | And
+  | Or
+  | LessThanEquals
+  | LessThan
+  | GreaterThanEquals
+  | GreaterThan
+  | Equals
   deriving (Eq, Ord, Read, Show)
 
 data Value
   = IntegerValue Int
   | DoubleValue Double
-  | EnumValue Start End Int
   | BooleanValue Bool
   deriving (Eq, Ord, Read, Show)
 
@@ -142,12 +142,12 @@ data Type
   | DoubleType
   | EnumType Start End
   | BooleanType
+  deriving (Eq, Ord, Read, Show)
 
 typeOf :: Value -> Type
 typeOf = \case
   IntegerValue _ -> IntegerType
   DoubleValue _ -> DoubleType
-  EnumValue s e _ -> EnumType s e
   BooleanValue _ -> BooleanType
 
 newtype Start = Start Int
@@ -164,3 +164,6 @@ int = IntegerValue
 
 newtype Name = Name { unName :: Text }
   deriving (Eq, Ord, Read, Show)
+
+instance IsString Name where
+  fromString = Name . fromString
