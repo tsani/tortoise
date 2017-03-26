@@ -5,7 +5,6 @@
 module Language.Prism.Pretty where
 
 import Language.Prism.Module
-import qualified Language.Prism.Module as P
 
 import Text.PrettyPrint.Leijen.Text
 import qualified Text.PrettyPrint.Leijen.Text as PP

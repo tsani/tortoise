@@ -42,9 +42,10 @@ import Fix
 
 import Data.String
 import Data.Text ( Text )
-import qualified Data.Text as T
 
 import Prelude hiding ( and, or, not )
+
+data PrismFile = PrismFile [Declaration]
 
 data DeclarationF next
   -- | e.g. @const double init_coal = 10@
