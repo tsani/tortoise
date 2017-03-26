@@ -95,8 +95,8 @@ prettyType = \case
   EnumType (Start s) (End e) -> "[" <> PP.int s <> ".." <> PP.int e <> "]"
   BooleanType -> "bool"
 
-pretty :: [Declaration] -> Doc
-pretty = vcat . map phi where
+pretty :: [Declaration] -> Text
+pretty = displayTStrict . renderPretty 1.0 maxBound . vcat . map phi where
   pExpression
     = cata (prettyExpressionF prettyValue prettyName prettyBinaryOperator)
 
