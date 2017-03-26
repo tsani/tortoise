@@ -72,10 +72,8 @@ data Scope
   deriving (Eq, Ord, Read, Show)
 
 data Update
-  = Update
-    { updateVar :: Name
-    , updateExpr :: Expression
-    }
+  = Update Name Expression
+  | Noop
   deriving (Eq, Ord, Read, Show)
 
 type Declaration = Fix DeclarationF

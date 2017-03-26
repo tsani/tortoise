@@ -50,8 +50,9 @@ prettyUpdate
   :: P Expression
   -> P Name
   -> P Update
-prettyUpdate ppExpr ppName Update{..}
-  = ppName updateVar <> "'" <+> "=" <+> ppExpr updateExpr
+prettyUpdate ppExpr ppName = \case
+  Update name expr -> ppName name <> "'" <+> "=" <+> ppExpr expr
+  Noop -> "true"
 
 prettyExpressionF
   :: P Value
