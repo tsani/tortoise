@@ -56,9 +56,9 @@ data DeclarationF next
     Name
     Value
   | Action
-    Name
+    (Maybe Name)
     Guard
-    [(Probability, Update)]
+    [(Expression, Update)]
   | Module
     Name
     [next]
@@ -67,9 +67,6 @@ data DeclarationF next
 data Scope
   = Global
   | Local
-  deriving (Eq, Ord, Read, Show)
-
-newtype Probability = Probability Double
   deriving (Eq, Ord, Read, Show)
 
 data Update
@@ -136,9 +133,22 @@ data BinaryOperator
 data Value
   = IntegerValue Int
   | DoubleValue Double
-  | EnumValue Start End
-  | Boolean Bool
+  | EnumValue Start End Int
+  | BooleanValue Bool
   deriving (Eq, Ord, Read, Show)
+
+data Type
+  = IntegerType
+  | DoubleType
+  | EnumType Start End
+  | BooleanType
+
+typeOf :: Value -> Type
+typeOf = \case
+  IntegerValue _ -> IntegerType
+  DoubleValue _ -> DoubleType
+  EnumValue s e _ -> EnumType s e
+  BooleanValue _ -> BooleanType
 
 newtype Start = Start Int
   deriving (Eq, Ord, Read, Show)
