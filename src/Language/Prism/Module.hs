@@ -45,8 +45,6 @@ import Data.Text ( Text )
 
 import Prelude hiding ( and, or, not )
 
-data PrismFile = PrismFile [Declaration]
-
 data DeclarationF next
   -- | e.g. @const double init_coal = 10@
   = ConstantDecl
@@ -61,7 +59,7 @@ data DeclarationF next
   | Action
     (Maybe Name)
     Expression
-    [(Expression, [Update])]
+    [(Expression, Update)]
   | Module
     Name
     [next]
@@ -73,7 +71,7 @@ data Scope
   deriving (Eq, Ord, Read, Show)
 
 data Update
-  = Update Name Expression
+  = Update [(Name, Expression)]
   | Noop
   deriving (Eq, Ord, Read, Show)
 

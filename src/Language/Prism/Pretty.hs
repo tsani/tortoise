@@ -30,16 +30,11 @@ prettyDeclarationF ppUpdate ppExpr ppType ppVal ppName = \case
     in case scope of
       Global -> "global" <+> name' <+> ":" <+> ty' <+> "init" <+> val' <> semi
       Local -> name' <+> ":" <+> ty' <+> "init" <+> val' <> semi
-  Action name guard updates -> let name' = maybe "" ppName name in
+  Action name guard update -> let name' = maybe "" ppName name in
     "[" <> name' <> "]" <+> ppExpr guard <+> "->" <+>
       cat (
-        punctuate " + " .
-        map (\(e, us)
-          -> ppExpr e <> ":" <> parens (
-            hcat . punctuate " & " $ map ppUpdate us
-          )
-        ) $
-        updates
+        punctuate " + " $
+        map (\(e, u) -> ppExpr e <> ":" <> ppUpdate u) update
       )
     <> semi
   Module name decls ->
@@ -50,7 +45,10 @@ prettyUpdate
   -> P Name
   -> P Update
 prettyUpdate ppExpr ppName = \case
-  Update name expr -> ppName name <> "'" <+> "=" <+> ppExpr expr
+  Update ps ->
+    hcat . punctuate " & " .
+    map (\(name, expr) -> parens (ppName name <> "'" <+> "=" <+> ppExpr expr)) $
+    ps
   Noop -> "true"
 
 prettyExpressionF

@@ -6,7 +6,6 @@ module Language.Prism.Codegen where
 import Fix
 
 import qualified Data.Text.Lazy as L
-import Data.Text.Format
 import Language.Prism.Module
 
 -- | Initial settings for the entire engagement.
@@ -26,7 +25,7 @@ declSettings InitSettings{..}
 declLevels :: [(Int, Int)] -> [Declaration]
 declLevels [] = []
 declLevels ((l, r):ls)
-  = Fix 
+  = Fix
     (ConstantDecl (enemyLevelName l) (int r))
   -- ^ Constant enemy base level
   -- : Fix (VariableDecl Global
@@ -50,7 +49,7 @@ numBotsName i = Name $ L.toStrict $ format "num_bots_{0}" [i]
 moduleName :: Int -> Name
 moduleName i = Name $ L.toStrict $ format "battle_{0}" [i]
 
--- | 
+-- |
 moduleTemplate
   :: Int -- ^ The current enemy ID.
   -> [Int] -- ^ The entire list of enemy IDs.
@@ -69,15 +68,15 @@ intExp i = Fix (Constant (int i))
 -- need to compute a proportion to 'receive' in this
 -- battle.
 --
--- This function does not produce the update to 
+-- This function does not produce the update to
 -- correspondingly reduce the number of originating bots.
 updateBotCount
-  :: Name 
+  :: Name
   -- ^ Variable containing the total number of bots
   -- that will be distributed.
   -> Int -- ^ Current enemy ID. This receives a proportion of the bots.
   -> [Int] -- ^ All enemy IDs
-  -> Update 
+  -> Update
   -- ^ Update that uses the appropriate update function to produce
   -- an update
 updateBotCount origin i es
@@ -89,22 +88,22 @@ updateExpression
   -> Int -- ^ ID of enemy receiving bots
   -> [Int] -- ^ The IDs in consideration.
   -> (Int -> Expression) -- ^ g(x), used in the summation.
-  -> Expression 
+  -> Expression
   -- ^ Expression that evaluates to number of bots received
   -- by enemy.
 updateExpression n i es g
-  = Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide 
+  = Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide
     (g i)
     (summation $ fmap (\x -> g x) es)
 
 -- | Example of a g(x) scaling function (scales adjusted level)
 -- for a given enemy ID.
-scale 
-  :: Int 
+scale
+  :: Int
   -- ^ ID of enemy
   -> Expression
   -- ^ g(x), the scaled adjusted level
-scale i 
+scale i
   = Fix $ Call "pow" [adjLevelExp i, Fix $ Variable "a"]
 
 -- | Expression representing adjusted level of enemy i
@@ -120,11 +119,11 @@ summation [x] = x
 summation (x:xs) = Fix $ BinaryOperator Add x (summation xs)
 
 -- | Provides the updates for the initial step.
-initDistribute 
+initDistribute
   :: Int    -- ^ Current enemy ID
   -> [Int]  -- ^ List of enemy IDs
-  -> [(Expression, [Update])] 
-  -- ^ Initial distribution of bots from N that go to 
+  -> [(Expression, [Update])]
+  -- ^ Initial distribution of bots from N that go to
   -- this battle.
 initDistribute i es
   = [(intExp 1, [updateBotCount "N" i es])]
@@ -156,12 +155,12 @@ redisPolicy
   -> [(Expression, [Update])]
 redisPolicy i es
   = let es' = filter (\x -> x /= i) es
-    in [(intExp 1, map 
+    in [(intExp 1, map
       (\x -> updateBotCount (numBotsName i) x es') es')]
 
--- | Produce the contents of 
+-- | Produce the contents of
 -- the module for the corresponding enemy.
-moduleDecls 
+moduleDecls
   :: Int   -- ^ The enemy ID
   -> [Int] -- ^ All enemy IDs
   -> [Declaration] -- ^ The module contents
@@ -176,7 +175,7 @@ moduleDecls i es =
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
 codegen :: InitSettings -> [Declaration]
-codegen set 
+codegen set
   = declSettings set ++ (genModules $ fst <$> (baseLevels set))
 
 -- | Produce list of declarations corresponding to the
