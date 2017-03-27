@@ -81,7 +81,7 @@ equals :: Expression -> Expression -> Expression
 equals e1 e2 = Fix (BinaryOperator Equals e1 e2)
 
 notEquals :: Expression -> Expression -> Expression
-notEquals e1 e2 = not (equals e1 e2)
+notEquals e1 e2 = Fix (BinaryOperator NotEquals e1 e2)
 
 lessThanEquals :: Expression -> Expression -> Expression
 lessThanEquals e1 e2 = Fix (BinaryOperator LessThanEquals e1 e2)
@@ -126,6 +126,7 @@ data BinaryOperator
   | GreaterThanEquals
   | GreaterThan
   | Equals
+  | NotEquals
   deriving (Eq, Ord, Read, Show)
 
 data Value

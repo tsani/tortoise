@@ -76,6 +76,7 @@ prettyBinaryOperator = \case
   GreaterThanEquals -> ">="
   GreaterThan -> ">"
   Equals -> "="
+  NotEquals -> "!="
 
 prettyValue :: P Value
 prettyValue = \case
