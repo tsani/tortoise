@@ -42,6 +42,8 @@ module Language.Prism.Module
 , (!<!)
 , (!>!)
 , (!>=!)
+, intExp
+, certainly
   -- ** Value shorthands
 , double
 , int
@@ -116,6 +118,12 @@ infixl 7 .=
 (#) :: a -> (a -> b) -> b
 (#) = flip ($)
 infixl 6 #
+
+intExp :: Int -> Expression
+intExp i = Fix (Constant (int i))
+
+certainly :: Update -> [(Expression, Update)]
+certainly u = [(intExp 1, u)]
 
 data Scope
   = Global

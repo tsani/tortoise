@@ -9,7 +9,6 @@ import Prelude hiding ( and )
 import Data.Monoid ( (<>) )
 import Data.String ( fromString )
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as L
 import Language.Prism.Module
 
 -- | Initial settings for the entire engagement.
@@ -76,9 +75,6 @@ moduleTemplate i es
 
 state :: Int -> Name
 state i = fromString $ "s_" <> show i
-
-intExp :: Int -> Expression
-intExp i = Fix (Constant (int i))
 
 -- | Produces the appropriate update from the given
 -- variable containing the bot count from which we
@@ -199,21 +195,26 @@ moduleDecls
   :: Int   -- ^ The enemy ID
   -> [Int] -- ^ All enemy IDs
   -> [Declaration] -- ^ The module contents
-moduleDecls i es
-  = Local # state i .= (EnumType (Start 0) (End 4), int 0)
-  :
-  (Fix (Action Nothing (var (state i) `equals` intExp 0) (initDistribute i es))) :
-  (Fix (Action (Just "attack") (var (state i) `equals` intExp 1) (attackUpdates i))) :
-  (Fix (Action Nothing ((var (state i) `equals` intExp 2) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :
+moduleDecls i es =
+  [ Local # state i .= (EnumType (Start 0) (End 4), int 0)
+  , inState 0 !~> initDistribute i es
+  , "attack" # inState 1 ~> attackUpdates i
+  , ((inState 2 !&&! otherLevels i es !/=! intExp 0) !~> redisPolicy i es)
   -- ^ Case where summation over other states is non-zero
-  (Fix (Action Nothing ((var (state i) `equals` intExp 2) `and` (otherLevels i es `equals` intExp 0)) [(intExp 1, Update $ [move i 3])])) :
+  ,
+    (inState 2 !&&! otherLevels i es !==! intExp 0)
+    !~>
+    certainly (Update [move i 3])
   -- ^ Case where summation over other states is zero
-  (Fix (Action (Just "attack") (var (state i) `equals` intExp 3) [(intExp 1, Noop)])) :
-  (Fix (Action (Just "done") (var (state i) `equals` intExp 3) [(intExp 1, Update [(state i, intExp 4)])])) : []
+  , "attack" # inState 3 ~> certainly Noop
+  , "done" # inState 3 ~> certainly (Update [move i 4])
+  ]
+  where
+    inState n = var (state i) !==! intExp n
 
 -- | Move state variable to j.
 move :: Int -> Int -> (Name, Expression)
-move i j = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp j)
+move i j = (state i, intExp j)
 
 -- | Return expression that computes the sum
 -- of levels of all enemies that aren't the given
@@ -224,7 +225,7 @@ otherLevels
   -> Expression
 otherLevels i es
   = let es' = filter (/= i) es
-    in summation $ fmap (Fix . Variable . enemyLevelName) es'
+    in summation $ fmap (var . enemyLevelName) es'
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
