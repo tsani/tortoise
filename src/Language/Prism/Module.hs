@@ -34,6 +34,14 @@ module Language.Prism.Module
 , (!*!)
 , (!/!)
 , (!?!)
+, (!==!)
+, (!/=!)
+, (!<=!)
+, (!&&!)
+, (!||!)
+, (!<!)
+, (!>!)
+, (!>=!)
   -- ** Value shorthands
 , double
 , int
@@ -124,11 +132,23 @@ type Declaration = Fix DeclarationF
 equals :: Expression -> Expression -> Expression
 equals e1 e2 = Fix (BinaryOperator Equals e1 e2)
 
+(!==!) :: Expression -> Expression -> Expression
+(!==!) = equals
+infix 4 !==!
+
 notEquals :: Expression -> Expression -> Expression
 notEquals e1 e2 = Fix (BinaryOperator NotEquals e1 e2)
 
+(!/=!) :: Expression -> Expression -> Expression
+(!/=!) = notEquals
+infix 4 !/=!
+
 lessThanEquals :: Expression -> Expression -> Expression
 lessThanEquals e1 e2 = Fix (BinaryOperator LessThanEquals e1 e2)
+
+(!<=!) :: Expression -> Expression -> Expression
+(!<=!) = lessThanEquals
+infix 4 !<=!
 
 not :: Expression -> Expression
 not = Fix . Not
@@ -136,17 +156,37 @@ not = Fix . Not
 and :: Expression -> Expression -> Expression
 and g1 g2 = Fix (BinaryOperator And g1 g2)
 
+(!&&!) :: Expression -> Expression -> Expression
+(!&&!) = and
+infixr 3 !&&!
+
 or :: Expression -> Expression -> Expression
 or g1 g2 = Fix (BinaryOperator Or g1 g2)
+
+(!||!) :: Expression -> Expression -> Expression
+(!||!) = or
+infixr 2 !||!
 
 lessThan :: Expression -> Expression -> Expression
 lessThan e1 e2 = Fix (BinaryOperator LessThan e1 e2)
 
+(!<!) :: Expression -> Expression -> Expression
+(!<!) = lessThan
+infix 4 !<!
+
 greaterThan :: Expression -> Expression -> Expression
 greaterThan e1 e2 = Fix (BinaryOperator GreaterThan e1 e2)
 
+(!>!) :: Expression -> Expression -> Expression
+(!>!) = greaterThan
+infix 4 !>!
+
 greaterThanEquals :: Expression -> Expression -> Expression
 greaterThanEquals e1 e2 = Fix (BinaryOperator GreaterThan e1 e2)
+
+(!>=!) :: Expression -> Expression -> Expression
+(!>=!) = greaterThanEquals
+infix 4 !>=!
 
 data ExpressionF next
   = Constant Value
