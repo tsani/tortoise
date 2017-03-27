@@ -1,7 +1,6 @@
 module Main where
 
 import qualified Data.Text.IO as T
-import Language.Prism.Module
 import Language.Prism.Pretty
 import Language.Prism.Codegen
 
@@ -14,4 +13,4 @@ initSet = InitSettings
      }
 
 main :: IO ()
-main = T.putStr $ pretty $ codegen initSet
+main = T.putStrLn $ pretty $ codegen initSet
