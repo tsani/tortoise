@@ -29,22 +29,22 @@ declSettings InitSettings{..}
   (Fix (ConstantDecl "e" (double 2.71828))) :
   (Fix (ConstantDecl "a" (double exponentArg))) :
   (Fix (ConstantDecl "c" (double efficiency))) : 
-  declLevels baseLevels
+  declLevels numBots baseLevels
 
-declLevels :: [(Int, Int)] -> [Declaration]
-declLevels [] = []
-declLevels ((l, r):ls)
+declLevels :: Int -> [(Int, Int)] -> [Declaration]
+declLevels _ [] = []
+declLevels m ((l, r):ls)
   = Fix 
-    (VariableDecl Global (enemyLevelName l) IntegerType (int r))
+    (VariableDecl Global (enemyLevelName l) (EnumType (Start 0) (End r)) (int r))
   -- ^ Constant enemy base level
   -- : Fix (VariableDecl Global
   --   (enemyAdjustedLevelName l) (int r))
   -- ^ Global var for enemy adjusted level. Starts
   -- at the same level because zero.
   : Fix (VariableDecl Global
-    (numBotsName l) IntegerType (int 0))
+    (numBotsName l) (EnumType (Start 0) (End m)) (int 0))
   -- ^ Global var for bots currently on this enemy.
-  : declLevels ls
+  : declLevels m ls
 
 enemyLevelName :: Int -> Name
 enemyLevelName i = Name ("enemy_base_level_" <> T.pack (show i))
@@ -140,7 +140,9 @@ initDistribute
   -- ^ Initial distribution of bots from N that go to
   -- this battle.
 initDistribute i es
-  = [(intExp 1, Update [updateBotCount "N" i es])]
+  = [(intExp 1, Update [ updateBotCount "N" i es
+                       , (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 1)
+                       ])]
 
 -- | Provide updates for attacking action in attacking state.
 attackUpdates
