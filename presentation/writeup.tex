@@ -12,6 +12,7 @@
 \usepackage{tikz}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{listings}
+\usepackage{graphicx}
 
 %%%%% TIKZ
 
@@ -36,5 +37,53 @@
 \begin{document}
 
 \frame{\titlepage}
+
+\begin{frame}
+    \frametitle{Robot apocalypse}
+
+    \includegraphics[width=\textwidth]{nanobots.png}
+
+    \pause
+
+    \begin{itemize}
+        \item
+            If you're going to take over the world, \alert{do it right.}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Model}
+
+    \begin{itemize}
+        \item
+            $N$ agents, $M$ targets.
+            %
+        \item
+            Targets become neutralized probabilistically.
+            %
+        \item
+            Agents can cooperate.
+            %
+    \end{itemize}
+
+    \begin{center}
+        \begin{tikzpicture}
+            \matrix[row sep=2cm, column sep=1cm]{
+                \node (A) {$A$} ; \&
+                \node (E) {$E$} ; \&
+                \node (K) {$K$} ; \&
+                \node (G) {$G$} ; \\
+            } ;
+
+            \graph[use existing nodes] {
+                A ->[edge label={init}]
+                E ->[edge label={atk},loop above]
+                E ->[edge label={atk}]
+                K ->[edge label={atk},loop above]
+                K ->[edge label={done}] G ;
+            } ;
+        \end{tikzpicture}
+    \end{center}
+\end{frame}
 
 \end{document}
