@@ -47,6 +47,7 @@ module Language.Prism.Module
   -- ** Value shorthands
 , double
 , int
+, bool
   -- ** Relational shorthands
 , equals
 , notEquals
@@ -287,6 +288,9 @@ double = DoubleValue
 
 int :: Int -> Value
 int = IntegerValue
+
+bool :: Bool -> Value
+bool = BooleanValue
 
 newtype Name = Name { unName :: Text }
   deriving (Eq, Ord, Read, Show)

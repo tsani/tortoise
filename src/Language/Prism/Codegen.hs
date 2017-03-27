@@ -4,7 +4,7 @@
 module Language.Prism.Codegen where
 
 import Fix
-import Prelude hiding ( and )
+import Prelude hiding ( and , not , or )
 
 import Data.Monoid ( (<>) )
 import Data.String ( fromString )
@@ -24,7 +24,7 @@ data InitSettings
   -- ^ Efficiency of robots
   }
 
--- | Declare
+-- | Produces the PRISM file preamble constants.
 declSettings :: InitSettings -> [Declaration]
 declSettings InitSettings{..}
   = Fix (ConstantDecl "N" (int numBots)) :
@@ -33,17 +33,17 @@ declSettings InitSettings{..}
   (Fix (ConstantDecl "c" (double efficiency))) :
   declLevels numBots baseLevels
 
+-- | Produces the PRISM file globals for keeping track
+-- of changing values.
 declLevels :: Int -> [(Int, Int)] -> [Declaration]
 declLevels _ [] = []
 declLevels m ((l, r):ls)
-  = Global # enemyLevelName l .= (EnumType (Start 0) (End r), int r)
+  = enemyLevelName l .=! (int r)
   -- ^ Constant enemy base level
-  -- : Fix (VariableDecl Global
-  --   (enemyAdjustedLevelName l) (int r))
-  -- ^ Global var for enemy adjusted level. Starts
-  -- at the same level because zero.
   : Global # numBotsName l .= (EnumType (Start 0) (End m), int 0)
   -- ^ Global var for bots currently on this enemy.
+  : Global # enemyDeadName l .= (BooleanType, bool False)
+  -- ^ Global var for whether or not this enemy is dead.
   : declLevels m ls
 
 -- | Gets the name for the variable representing the level of a particular
@@ -51,10 +51,8 @@ declLevels m ((l, r):ls)
 enemyLevelName :: Int -> Name
 enemyLevelName i = Name ("enemy_base_level_" <> T.pack (show i))
 
--- | Gets the name for the variable representing the adjusted level of a
--- particular enemy.
-enemyAdjustedLevelName :: Int -> Name
-enemyAdjustedLevelName i = Name ("enemy_adj_level_" <> T.pack (show i))
+enemyDeadName :: Int -> Name
+enemyDeadName i = Name ("enemy_dead_" <> T.pack (show i))
 
 -- | Gets the name for the variable representing the number of bots attacking a
 -- particular enemy.
@@ -65,7 +63,6 @@ numBotsName i = Name ("num_bots_" <> T.pack (show i))
 moduleName :: Int -> Name
 moduleName i = Name ("battle_" <> T.pack (show i))
 
--- |
 moduleTemplate
   :: Int -- ^ The current enemy ID.
   -> [Int] -- ^ The entire list of enemy IDs.
@@ -98,6 +95,7 @@ updateBotCount origin i es g
   = (numBotsName i, updateExpression origin i es g)
 
 -- | The update expression in the RHS of a command.
+-- Does not add the previous amount.
 updateExpression
   :: Name -- ^ Origin of bots
   -> Int -- ^ ID of enemy receiving bots
@@ -107,8 +105,7 @@ updateExpression
   -- ^ Expression that evaluates to number of bots received
   -- by enemy.
 updateExpression n i es g
-  = var (numBotsName i)
-  !+!  call "floor" [ var n !*! (g i !/! summation (g <$> es)) ]
+  = call "floor" [ var n !*! (g i !/! summation (g <$> es)) ]
 
 -- | Example of a g(x) scaling function (scales adjusted level)
 -- for a given enemy ID.
@@ -118,7 +115,7 @@ scale
   -> Expression
   -- ^ g(x), the scaled adjusted level
 scale i
-  = call "pow" [adjLevelExp i, "a"]
+  = var (enemyDeadName i) !?! intExp 0 $ call "pow" [adjLevelExp i, "a"]
 
 -- | Expression representing adjusted level of enemy i
 adjLevelExp :: Int -> Expression
@@ -179,15 +176,20 @@ redisPolicy
   :: Int
   -> [Int]
   -> [(Expression, Update)]
-redisPolicy i es = [(intExp 1, Update $ move' : lvl : u)] where
+redisPolicy i es = [(intExp 1, Update $ move' : kill : u)] where
   es' = filter (/= i) es
-  u = map (\x -> updateBotCount (numBotsName i) x es' scale) es'
-  lvl = resetLevel i
+  u = map (\x -> updateBotCount "N" x es' scale) es'
   move' = (state i, intExp 3)
   -- ^ Move to state 3
+  kill = setDead i
 
-resetLevel :: Int -> (Name, Expression)
-resetLevel i = (enemyLevelName i, intExp 0)
+-- resetLevel :: Int -> (Name, Expression)
+-- resetLevel i = (enemyLevelName i, intExp 0)
+
+-- | Provide the update for setting the 'dead' flag on
+-- the ith enemy.
+setDead :: Int -> (Name, Expression)
+setDead i = (enemyDeadName i, constant $ bool True)
 
 -- | Produce the contents of
 -- the module for the corresponding enemy.
@@ -199,14 +201,14 @@ moduleDecls i es =
   [ Local # state i .= (EnumType (Start 0) (End 4), int 0)
   , inState 0 !~> initDistribute i es
   , "attack" # inState 1 ~> attackUpdates i
-  , ((inState 2 !&&! otherLevels i es !/=! intExp 0) !~> redisPolicy i es)
+  , ((inState 2) !&&! (not $ allOtherDead i es)) !~> redisPolicy i es
   -- ^ Case where summation over other states is non-zero
   ,
-    (inState 2 !&&! otherLevels i es !==! intExp 0)
+    (inState 2 !&&! allOtherDead i es)
     !~>
     certainly (Update [move i 3])
   -- ^ Case where summation over other states is zero
-  , "attack" # inState 3 ~> certainly Noop
+  , "attack" # ((inState 3) !&&! (not $ allOtherDead i es)) ~> certainly Noop
   , "done" # inState 3 ~> certainly (Update [move i 4])
   ]
   where
@@ -216,16 +218,25 @@ moduleDecls i es =
 move :: Int -> Int -> (Name, Expression)
 move i j = (state i, intExp j)
 
--- | Return expression that computes the sum
--- of levels of all enemies that aren't the given
--- 'i'.
-otherLevels
+-- | Return conjunction other whether all other enemies
+-- aside from given one are dead.
+allOtherDead
   :: Int
   -> [Int]
   -> Expression
-otherLevels i es
+allOtherDead i es
   = let es' = filter (/= i) es
-    in summation $ fmap (var . enemyLevelName) es'
+    in conjunction $ fmap (var . enemyDeadName) es'
+
+disjunction :: [Expression] -> Expression
+disjunction [] = error "Empty list passed to disjunction."
+disjunction [x] = x
+disjunction (x:xs) = x `or` disjunction xs
+
+conjunction :: [Expression] -> Expression
+conjunction [] = error "Empty list passed to conjunction."
+conjunction [x] = x
+conjunction (x:xs) = x `and` disjunction xs
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
