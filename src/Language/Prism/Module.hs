@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Language.Prism.Module
@@ -19,6 +20,18 @@ module Language.Prism.Module
 , Start(..)
 , End(..)
 , Name(..)
+  -- ** Sugar
+, constant
+, var
+, call
+, (~>)
+, (.=!)
+, (.=)
+, (#)
+, (!+!)
+, (!-!)
+, (!*!)
+, (!/!)
   -- ** Value shorthands
 , double
 , int
@@ -64,6 +77,31 @@ data DeclarationF next
     Name
     [next]
   deriving (Eq, Functor, Ord, Read, Show)
+
+action :: Expression -> [(Expression, Update)] -> Maybe Name -> Declaration
+action guard update n = Fix (Action n guard update)
+
+(~>) :: Expression -> [(Expression, Update)] -> Maybe Name -> Declaration
+(~>) = action
+infixl 7 ~>
+
+constantDecl :: Name -> Value -> Declaration
+constantDecl n v = Fix (ConstantDecl n v)
+
+(.=!) :: Name -> Value -> Declaration
+(.=!) = constantDecl
+infixl 7 .=!
+
+variableDecl :: Name -> (Type, Value) -> Scope -> Declaration
+variableDecl n (t, v) s = Fix (VariableDecl s n t v)
+
+(.=) :: Name -> (Type, Value) -> Scope -> Declaration
+(.=) = variableDecl
+infixl 7 .=
+
+(#) :: a -> (a -> b) -> b
+(#) = flip ($)
+infixl 6 #
 
 data Scope
   = Global
@@ -112,7 +150,38 @@ data ExpressionF next
   | Not next
   deriving (Eq, Functor, Ord, Read, Show)
 
+constant :: Value -> Expression
+constant = Fix . Constant
+
+var :: Name -> Expression
+var = Fix . Variable
+
+call :: Name -> [Expression] -> Expression
+call n args = Fix (Call n args)
+
+instance IsString (Fix ExpressionF) where
+  fromString = Fix . Variable . fromString
+
 type Expression = Fix ExpressionF
+
+op :: BinaryOperator -> Expression -> Expression -> Expression
+op o e1 e2 = Fix (BinaryOperator o e1 e2)
+
+(!+!) :: Expression -> Expression -> Expression
+(!+!) = op Add
+infixl 6 !+!
+
+(!-!) :: Expression -> Expression -> Expression
+(!-!) = op Subtract
+infixl 6 !-!
+
+(!*!) :: Expression -> Expression -> Expression
+(!*!) = op Multiply
+infixl 7 !*!
+
+(!/!) :: Expression -> Expression -> Expression
+(!/!) = op Divide
+infixl 7 !/!
 
 data BinaryOperator
   = Add

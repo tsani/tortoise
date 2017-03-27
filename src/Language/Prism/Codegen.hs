@@ -7,6 +7,7 @@ import Fix
 import Prelude hiding ( and )
 
 import Data.Monoid ( (<>) )
+import Data.String ( fromString )
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
 import Language.Prism.Module
@@ -24,38 +25,44 @@ data InitSettings
   -- ^ Efficiency of robots
   }
 
+-- | Declare
 declSettings :: InitSettings -> [Declaration]
 declSettings InitSettings{..}
   = Fix (ConstantDecl "N" (int numBots)) :
   (Fix (ConstantDecl "e" (double 2.71828))) :
   (Fix (ConstantDecl "a" (double exponentArg))) :
-  (Fix (ConstantDecl "c" (double efficiency))) : 
+  (Fix (ConstantDecl "c" (double efficiency))) :
   declLevels numBots baseLevels
 
 declLevels :: Int -> [(Int, Int)] -> [Declaration]
 declLevels _ [] = []
 declLevels m ((l, r):ls)
-  = Fix 
-    (VariableDecl Global (enemyLevelName l) (EnumType (Start 0) (End r)) (int r))
+  = Global # enemyLevelName l .= (EnumType (Start 0) (End r), int r)
   -- ^ Constant enemy base level
   -- : Fix (VariableDecl Global
   --   (enemyAdjustedLevelName l) (int r))
   -- ^ Global var for enemy adjusted level. Starts
   -- at the same level because zero.
-  : Fix (VariableDecl Global
-    (numBotsName l) (EnumType (Start 0) (End m)) (int 0))
+  : Global # numBotsName l .= (EnumType (Start 0) (End m), int 0)
   -- ^ Global var for bots currently on this enemy.
   : declLevels m ls
 
+-- | Gets the name for the variable representing the level of a particular
+-- enemy.
 enemyLevelName :: Int -> Name
 enemyLevelName i = Name ("enemy_base_level_" <> T.pack (show i))
 
+-- | Gets the name for the variable representing the adjusted level of a
+-- particular enemy.
 enemyAdjustedLevelName :: Int -> Name
 enemyAdjustedLevelName i = Name ("enemy_adj_level_" <> T.pack (show i))
 
+-- | Gets the name for the variable representing the number of bots attacking a
+-- particular enemy.
 numBotsName :: Int -> Name
 numBotsName i = Name ("num_bots_" <> T.pack (show i))
 
+-- | Gets the name for the module representing a particular battle.
 moduleName :: Int -> Name
 moduleName i = Name ("battle_" <> T.pack (show i))
 
@@ -67,8 +74,8 @@ moduleTemplate
 moduleTemplate i es
   = Fix $ Module (moduleName i) $ moduleDecls i es
 
-state :: Int -> Expression
-state i = Fix (Variable $ Name $ L.toStrict $ "s_" `L.append` (L.pack $ show i))
+state :: Int -> Name
+state i = fromString $ "s_" <> show i
 
 intExp :: Int -> Expression
 intExp i = Fix (Constant (int i))
@@ -104,12 +111,8 @@ updateExpression
   -- ^ Expression that evaluates to number of bots received
   -- by enemy.
 updateExpression n i es g
-  = Fix $ BinaryOperator Add (Fix $ Variable $ numBotsName i) $
-    Fix $ Call "floor" 
-    [ Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide
-      (g i)
-      (summation $ fmap (\x -> g x) es)
-    ]
+  = var (numBotsName i)
+  !+!  call "floor" [ var n !*! (g i !/! summation (g <$> es)) ]
 
 -- | Example of a g(x) scaling function (scales adjusted level)
 -- for a given enemy ID.
@@ -119,22 +122,18 @@ scale
   -> Expression
   -- ^ g(x), the scaled adjusted level
 scale i
-  = Fix $ Call "pow" [adjLevelExp i, Fix $ Variable "a"]
+  = call "pow" [adjLevelExp i, "a"]
 
 -- | Expression representing adjusted level of enemy i
 adjLevelExp :: Int -> Expression
-adjLevelExp i = Fix $
-  BinaryOperator Divide (Fix $ Variable (enemyLevelName i))
-  (Fix $ BinaryOperator Add
-    (Fix $ BinaryOperator Multiply (Fix $ Variable "c") (Fix $ Variable (numBotsName i)))
-    (Fix $ Constant $ int 1)
-  )
+adjLevelExp i
+  = var (enemyLevelName i) !/! ("c" !*! var (numBotsName i) !+! intExp 1)
 
 -- | Provides the summation over a list of expressions.
 summation :: [Expression] -> Expression
 summation [] = error "Empty list passed to summation."
 summation [x] = x
-summation (x:xs) = Fix $ BinaryOperator Add x (summation xs)
+summation (x:xs) = x !+! summation xs
 
 -- | Provides the updates for the initial step.
 initDistribute
@@ -143,10 +142,14 @@ initDistribute
   -> [(Expression, Update)]
   -- ^ Initial distribution of bots from N that go to
   -- this battle.
-initDistribute i es
-  = [(intExp 1, Update [ updateBotCount "N" i es idBaseLevel
-                       , (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 1)
-                       ])]
+initDistribute i es =
+  [ ( intExp 1
+    , Update
+      [ updateBotCount "N" i es idBaseLevel
+      , (state i, intExp 1)
+      ]
+    )
+  ]
 
 -- | Provides simply the base level of the
 -- given enemy ID.
@@ -162,16 +165,16 @@ attackUpdates
 attackUpdates i
   = let prob = expCdf $ adjLevelExp i
     in [ (prob, Noop)
-       , ( Fix $ BinaryOperator Subtract (intExp 1) prob
-         , Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 2)]
+       , ( intExp 1 !-! prob
+         , Update [(state i, intExp 2)]
          )
        ]
 
 -- | Take adjusted level and return expression of f(x) = 1 - exp(-x)
 -- evaluated at adjustedLevel.
 expCdf :: Expression -> Expression
-expCdf adjustedLevel = Fix $ BinaryOperator Subtract (intExp 1)
-  $ Fix $ Call "pow" [Fix $ Variable "e", Fix $ BinaryOperator Subtract (intExp 0) adjustedLevel]
+expCdf adjustedLevel
+  = intExp 1 !-! call "pow" [ "e", intExp 0 !-! adjustedLevel ]
 
 -- | Provides the redistribution policy given enemy ID
 -- and rest of IDs. Updates must be performed on each enemy except
@@ -184,7 +187,7 @@ redisPolicy i es = [(intExp 1, Update $ move' : lvl : u)] where
   es' = filter (/= i) es
   u = map (\x -> updateBotCount (numBotsName i) x es' scale) es'
   lvl = resetLevel i
-  move' = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 3)
+  move' = (state i, intExp 3)
   -- ^ Move to state 3
 
 resetLevel :: Int -> (Name, Expression)
@@ -198,14 +201,14 @@ moduleDecls
   -> [Declaration] -- ^ The module contents
 moduleDecls i es =
   (Fix (VariableDecl Local (Name $ L.toStrict $ "s_" <> L.pack (show i)) (EnumType (Start 0) (End 4)) (int 0))) :
-  (Fix (Action Nothing (state i `equals` (intExp 0)) (initDistribute i es))) :
-  (Fix (Action (Just "attack") (state i `equals` (intExp 1)) (attackUpdates i))) :
-  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :
+  (Fix (Action Nothing (var (state i) `equals` intExp 0) (initDistribute i es))) :
+  (Fix (Action (Just "attack") (var (state i) `equals` intExp 1) (attackUpdates i))) :
+  (Fix (Action Nothing ((var (state i) `equals` intExp 2) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :
   -- ^ Case where summation over other states is non-zero
-  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `equals` intExp 0)) [(intExp 1, Update $ [move i 3])])) :
+  (Fix (Action Nothing ((var (state i) `equals` intExp 2) `and` (otherLevels i es `equals` intExp 0)) [(intExp 1, Update $ [move i 3])])) :
   -- ^ Case where summation over other states is zero
-  (Fix (Action (Just "attack") (state i `equals` (intExp 3)) [(intExp 1, Noop)])) :
-  (Fix (Action (Just "done") (state i `equals` (intExp 3)) [(intExp 1, Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 4)])])) : []
+  (Fix (Action (Just "attack") (var (state i) `equals` intExp 3) [(intExp 1, Noop)])) :
+  (Fix (Action (Just "done") (var (state i) `equals` intExp 3) [(intExp 1, Update [(state i, intExp 4)])])) : []
 
 -- | Move state variable to j.
 move :: Int -> Int -> (Name, Expression)
