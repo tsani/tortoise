@@ -57,9 +57,9 @@ data DeclarationF next
     Type
     Value
   | Action
-    (Maybe Name)
-    Expression
-    [(Expression, Update)]
+    (Maybe Name) -- ^ name for the action
+    Expression -- ^ guard
+    [(Expression, Update)] -- ^ the probability and the updates to do
   | Module
     Name
     [next]

@@ -5,6 +5,8 @@ module Language.Prism.Codegen where
 
 import Fix
 
+import Data.Monoid ( (<>) )
+import qualified Data.Text as T
 import qualified Data.Text.Lazy as L
 import Language.Prism.Module
 
@@ -38,16 +40,16 @@ declLevels ((l, r):ls)
   : declLevels ls
 
 enemyLevelName :: Int -> Name
-enemyLevelName i = Name $ L.toStrict $ format "enemy_base_level_{0}" [i]
+enemyLevelName i = Name ("enemy_base_level_" <> T.pack (show i))
 
 enemyAdjustedLevelName :: Int -> Name
-enemyAdjustedLevelName i = Name $ L.toStrict $ format "enemy_adj_level_{0}" [i]
+enemyAdjustedLevelName i = Name ("enemy_adj_level_" <> T.pack (show i))
 
 numBotsName :: Int -> Name
-numBotsName i = Name $ L.toStrict $ format "num_bots_{0}" [i]
+numBotsName i = Name ("num_bots_" <> T.pack (show i))
 
 moduleName :: Int -> Name
-moduleName i = Name $ L.toStrict $ format "battle_{0}" [i]
+moduleName i = Name ("battle_" <> T.pack (show i))
 
 -- |
 moduleTemplate
@@ -76,11 +78,11 @@ updateBotCount
   -- that will be distributed.
   -> Int -- ^ Current enemy ID. This receives a proportion of the bots.
   -> [Int] -- ^ All enemy IDs
-  -> Update
+  -> (Name, Expression)
   -- ^ Update that uses the appropriate update function to produce
   -- an update
 updateBotCount origin i es
-  = Update (numBotsName i) (updateExpression origin i es scale)
+  = (numBotsName i, updateExpression origin i es scale)
 
 -- | The update expression in the RHS of a command.
 updateExpression
@@ -122,22 +124,24 @@ summation (x:xs) = Fix $ BinaryOperator Add x (summation xs)
 initDistribute
   :: Int    -- ^ Current enemy ID
   -> [Int]  -- ^ List of enemy IDs
-  -> [(Expression, [Update])]
+  -> [(Expression, Update)]
   -- ^ Initial distribution of bots from N that go to
   -- this battle.
 initDistribute i es
-  = [(intExp 1, [updateBotCount "N" i es])]
+  = [(intExp 1, Update [updateBotCount "N" i es])]
 
 -- | Provide updates for attacking action in attacking state.
 attackUpdates
   :: Int
   -- ^ The current enemy ID.
-  -> [(Expression, [Update])]
+  -> [(Expression, Update)]
   -- ^ The updates that can occur when attacking in attacking state.
 attackUpdates i
   = let prob = expCdf $ adjLevelExp i
-    in [ (prob, [Noop])
-       , (Fix $ BinaryOperator Subtract (intExp 1) prob, [Update "s" (intExp 2)])
+    in [ (prob, Noop)
+       , ( Fix $ BinaryOperator Subtract (intExp 1) prob
+         , Update [("s", intExp 2)]
+         )
        ]
 
 -- | Take adjusted level and return expression of f(x) = 1 - exp(-x)
@@ -152,11 +156,10 @@ expCdf adjustedLevel = Fix $ BinaryOperator Subtract (intExp 1)
 redisPolicy
   :: Int
   -> [Int]
-  -> [(Expression, [Update])]
-redisPolicy i es
-  = let es' = filter (\x -> x /= i) es
-    in [(intExp 1, map
-      (\x -> updateBotCount (numBotsName i) x es') es')]
+  -> [(Expression, Update)]
+redisPolicy i es = [(intExp 1, Update u)] where
+  es' = filter (/= i) es
+  u = map (\x -> updateBotCount (numBotsName i) x es') es'
 
 -- | Produce the contents of
 -- the module for the corresponding enemy.
@@ -169,8 +172,8 @@ moduleDecls i es =
   (Fix (Action Nothing (state `equals` (intExp 0)) (initDistribute i es))) :
   (Fix (Action (Just "attack") (state `equals` (intExp 1)) (attackUpdates i))) :
   (Fix (Action Nothing (state `equals` (intExp 2)) (redisPolicy i es))) :
-  (Fix (Action (Just "attack") (state `equals` (intExp 3)) [(intExp 1, [Noop])])) :
-  (Fix (Action (Just "done") (state `equals` (intExp 3)) [(intExp 1, [Update "s" (intExp 4)])])) : []
+  (Fix (Action (Just "attack") (state `equals` (intExp 3)) [(intExp 1, Noop)])) :
+  (Fix (Action (Just "done") (state `equals` (intExp 3)) [(intExp 1, Update [("s", intExp 4)])])) : []
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
