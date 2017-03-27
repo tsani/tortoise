@@ -140,7 +140,7 @@ attackUpdates i
   = let prob = expCdf $ adjLevelExp i
     in [ (prob, Noop)
        , ( Fix $ BinaryOperator Subtract (intExp 1) prob
-         , Update [("s", intExp 2)]
+         , Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 2)]
          )
        ]
 
