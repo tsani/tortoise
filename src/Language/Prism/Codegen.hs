@@ -1,5 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Language.Prism.Codegen where
 
@@ -27,8 +27,8 @@ declSettings InitSettings{..}
 declLevels :: [(Int, Int)] -> [Declaration]
 declLevels [] = []
 declLevels ((l, r):ls)
-  = Fix
-    (ConstantDecl (enemyLevelName l) (int r))
+  = Fix 
+    (VariableDecl Global (enemyLevelName l) IntegerType (int r))
   -- ^ Constant enemy base level
   -- : Fix (VariableDecl Global
   --   (enemyAdjustedLevelName l) (int r))
@@ -59,8 +59,8 @@ moduleTemplate
 moduleTemplate i es
   = Fix $ Module (moduleName i) $ moduleDecls i es
 
-state :: Expression
-state = Fix (Variable "s")
+state :: Int -> Expression
+state i = Fix (Variable $ Name $ L.toStrict $ "s_" `L.append` (L.pack $ show i))
 
 intExp :: Int -> Expression
 intExp i = Fix (Constant (int i))
@@ -157,9 +157,13 @@ redisPolicy
   :: Int
   -> [Int]
   -> [(Expression, Update)]
-redisPolicy i es = [(intExp 1, Update u)] where
+redisPolicy i es = [(intExp 1, Update $ lvl : u)] where
   es' = filter (/= i) es
   u = map (\x -> updateBotCount (numBotsName i) x es') es'
+  lvl = resetLevel i
+
+resetLevel :: Int -> (Name, Expression)
+resetLevel i = (enemyLevelName i, intExp 0)
 
 -- | Produce the contents of
 -- the module for the corresponding enemy.
@@ -168,12 +172,12 @@ moduleDecls
   -> [Int] -- ^ All enemy IDs
   -> [Declaration] -- ^ The module contents
 moduleDecls i es =
-  (Fix (VariableDecl Local "s" (EnumType (Start 0) (End 4)) (int 0))) :
-  (Fix (Action Nothing (state `equals` (intExp 0)) (initDistribute i es))) :
-  (Fix (Action (Just "attack") (state `equals` (intExp 1)) (attackUpdates i))) :
-  (Fix (Action Nothing (state `equals` (intExp 2)) (redisPolicy i es))) :
-  (Fix (Action (Just "attack") (state `equals` (intExp 3)) [(intExp 1, Noop)])) :
-  (Fix (Action (Just "done") (state `equals` (intExp 3)) [(intExp 1, Update [("s", intExp 4)])])) : []
+  (Fix (VariableDecl Local (Name $ L.toStrict $ "s_" <> L.pack (show i)) (EnumType (Start 0) (End 4)) (int 0))) :
+  (Fix (Action Nothing (state i `equals` (intExp 0)) (initDistribute i es))) :
+  (Fix (Action (Just "attack") (state i `equals` (intExp 1)) (attackUpdates i))) :
+  (Fix (Action Nothing (state i `equals` (intExp 2)) (redisPolicy i es))) :
+  (Fix (Action (Just "attack") (state i `equals` (intExp 3)) [(intExp 1, Noop)])) :
+  (Fix (Action (Just "done") (state i `equals` (intExp 3)) [(intExp 1, Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 4)])])) : []
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
