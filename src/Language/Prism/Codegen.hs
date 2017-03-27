@@ -26,12 +26,12 @@ data InitSettings
 
 -- | Produces the PRISM file preamble constants.
 declSettings :: InitSettings -> [Declaration]
-declSettings InitSettings{..}
-  = Fix (ConstantDecl "N" (int numBots)) :
-  (Fix (ConstantDecl "e" (double 2.71828))) :
-  (Fix (ConstantDecl "a" (double exponentArg))) :
-  (Fix (ConstantDecl "c" (double efficiency))) :
-  declLevels numBots baseLevels
+declSettings InitSettings{..} 
+  = Global # "N" .= (EnumType (Start 0) (End numBots), (int numBots)) 
+  : (Fix (ConstantDecl "e" (double 2.71828))) 
+  : (Fix (ConstantDecl "a" (double exponentArg))) 
+  : (Fix (ConstantDecl "c" (double efficiency))) 
+  : declLevels numBots baseLevels
 
 -- | Produces the PRISM file globals for keeping track
 -- of changing values.
@@ -157,7 +157,7 @@ attackUpdates
   -- ^ The updates that can occur when attacking in attacking state.
 attackUpdates i
   = let prob = expCdf $ adjLevelExp i
-    in [ (prob, Noop)
+    in [ (prob, Update [move i 5])
        , ( intExp 1 !-! prob
          , Update [(state i, intExp 2)]
          )
@@ -198,9 +198,10 @@ moduleDecls
   -> [Int] -- ^ All enemy IDs
   -> [Declaration] -- ^ The module contents
 moduleDecls i es =
-  [ Local # state i .= (EnumType (Start 0) (End 4), int 0)
+  [ Local # state i .= (EnumType (Start 0) (End 5), int 0)
   , inState 0 !~> initDistribute i es
-  , "attack" # inState 1 ~> attackUpdates i
+  , "attack" # ((inState 1) `and` (var (numBotsName i) !>! intExp 0)) ~> attackUpdates i
+  , "attack" # ((inState 1) `and` (var (numBotsName i) !==! intExp 0)) ~> [(intExp 1, Noop)]
   , ((inState 2) !&&! (not $ allOtherDead i es)) !~> redisPolicy i es
   -- ^ Case where summation over other states is non-zero
   ,
@@ -210,9 +211,14 @@ moduleDecls i es =
   -- ^ Case where summation over other states is zero
   , "attack" # ((inState 3) !&&! (not $ allOtherDead i es)) ~> certainly Noop
   , "done" # inState 3 ~> certainly (Update [move i 4])
+  , ((inState 5) `and` (var (numBotsName i) !>! intExp 0) `and` (var "N" !>! intExp 0)) !~> (certainly $ suffer i)
   ]
   where
     inState n = var (state i) !==! intExp n
+    suffer i' = Update [ move i' 1
+                      , (numBotsName i', var (numBotsName i') !-! intExp 1)
+                      , ("N", var "N" !-! intExp 1)
+                      ]
 
 -- | Move state variable to j.
 move :: Int -> Int -> (Name, Expression)
