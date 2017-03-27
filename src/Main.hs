@@ -7,7 +7,7 @@ import Language.Prism.Codegen
 
 initSet :: InitSettings
 initSet = InitSettings
-     { numBots = 100
+     { numBots = 10000
      , baseLevels = [(1, 10), (2, 60), (3, 37)]
      , efficiency = 1.0
      , exponentArg = 1.0

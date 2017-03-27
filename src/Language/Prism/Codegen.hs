@@ -86,11 +86,13 @@ updateBotCount
   -- that will be distributed.
   -> Int -- ^ Current enemy ID. This receives a proportion of the bots.
   -> [Int] -- ^ All enemy IDs
+  -> (Int -> Expression)
+  -- ^ Function mapping enemy IDs
   -> (Name, Expression)
-  -- ^ Update that uses the appropriate update function to produce
+  -- ^ Update that uses the appropriate update function to produce the "weight" of a particular enemy.
   -- an update
-updateBotCount origin i es
-  = (numBotsName i, updateExpression origin i es scale)
+updateBotCount origin i es g
+  = (numBotsName i, updateExpression origin i es g)
 
 -- | The update expression in the RHS of a command.
 updateExpression
@@ -141,9 +143,14 @@ initDistribute
   -- ^ Initial distribution of bots from N that go to
   -- this battle.
 initDistribute i es
-  = [(intExp 1, Update [ updateBotCount "N" i es
+  = [(intExp 1, Update [ updateBotCount "N" i es idBaseLevel
                        , (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 1)
                        ])]
+
+-- | Provides simply the base level of the
+-- given enemy ID.
+idBaseLevel :: Int -> Expression
+idBaseLevel = Fix . Variable . enemyLevelName
 
 -- | Provide updates for attacking action in attacking state.
 attackUpdates
@@ -172,11 +179,11 @@ redisPolicy
   :: Int
   -> [Int]
   -> [(Expression, Update)]
-redisPolicy i es = [(intExp 1, Update $ move : lvl : u)] where
+redisPolicy i es = [(intExp 1, Update $ move' : lvl : u)] where
   es' = filter (/= i) es
-  u = map (\x -> updateBotCount (numBotsName i) x es') es'
+  u = map (\x -> updateBotCount (numBotsName i) x es' scale) es'
   lvl = resetLevel i
-  move = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 3)
+  move' = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 3)
   -- ^ Move to state 3
 
 resetLevel :: Int -> (Name, Expression)
@@ -194,10 +201,14 @@ moduleDecls i es =
   (Fix (Action (Just "attack") (state i `equals` (intExp 1)) (attackUpdates i))) :
   (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :
   -- ^ Case where summation over other states is non-zero
-  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `equals` intExp 0)) (redisPolicy i es))) :
+  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `equals` intExp 0)) [(intExp 1, Update $ [move i 3])])) :
   -- ^ Case where summation over other states is zero
   (Fix (Action (Just "attack") (state i `equals` (intExp 3)) [(intExp 1, Noop)])) :
   (Fix (Action (Just "done") (state i `equals` (intExp 3)) [(intExp 1, Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 4)])])) : []
+
+-- | Move state variable to j.
+move :: Int -> Int -> (Name, Expression)
+move i j = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp j)
 
 -- | Return expression that computes the sum
 -- of levels of all enemies that aren't the given
