@@ -4,6 +4,7 @@
 module Language.Prism.Codegen where
 
 import Fix
+import Prelude hiding ( and )
 
 import Data.Monoid ( (<>) )
 import qualified Data.Text as T
@@ -171,10 +172,12 @@ redisPolicy
   :: Int
   -> [Int]
   -> [(Expression, Update)]
-redisPolicy i es = [(intExp 1, Update $ lvl : u)] where
+redisPolicy i es = [(intExp 1, Update $ move : lvl : u)] where
   es' = filter (/= i) es
   u = map (\x -> updateBotCount (numBotsName i) x es') es'
   lvl = resetLevel i
+  move = (Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 3)
+  -- ^ Move to state 3
 
 resetLevel :: Int -> (Name, Expression)
 resetLevel i = (enemyLevelName i, intExp 0)
@@ -189,9 +192,23 @@ moduleDecls i es =
   (Fix (VariableDecl Local (Name $ L.toStrict $ "s_" <> L.pack (show i)) (EnumType (Start 0) (End 4)) (int 0))) :
   (Fix (Action Nothing (state i `equals` (intExp 0)) (initDistribute i es))) :
   (Fix (Action (Just "attack") (state i `equals` (intExp 1)) (attackUpdates i))) :
-  (Fix (Action Nothing (state i `equals` (intExp 2)) (redisPolicy i es))) :
+  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :
+  -- ^ Case where summation over other states is non-zero
+  (Fix (Action Nothing ((state i `equals` (intExp 2)) `and` (otherLevels i es `equals` intExp 0)) (redisPolicy i es))) :
+  -- ^ Case where summation over other states is zero
   (Fix (Action (Just "attack") (state i `equals` (intExp 3)) [(intExp 1, Noop)])) :
   (Fix (Action (Just "done") (state i `equals` (intExp 3)) [(intExp 1, Update [(Name $ L.toStrict $ "s_" <> L.pack (show i), intExp 4)])])) : []
+
+-- | Return expression that computes the sum
+-- of levels of all enemies that aren't the given
+-- 'i'.
+otherLevels
+  :: Int
+  -> [Int]
+  -> Expression
+otherLevels i es
+  = let es' = filter (/= i) es
+    in summation $ fmap (Fix . Variable . enemyLevelName) es'
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
