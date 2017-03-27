@@ -62,6 +62,7 @@ prettyExpressionF ppVal ppName ppBin = \case
   BinaryOperator b e1 e2 -> parens (e1 <+> ppBin b <+> e2)
   Call name args -> parens (ppName name <> parens (hcat (punctuate ", " args)))
   Not e -> parens ("!" <+> e)
+  Ternary e1 e2 e3 -> parens (e1 <+> "?" <+> e2 <+> ":" <+> e3)
 
 prettyBinaryOperator :: P BinaryOperator
 prettyBinaryOperator = \case

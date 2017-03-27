@@ -199,8 +199,9 @@ moduleDecls
   :: Int   -- ^ The enemy ID
   -> [Int] -- ^ All enemy IDs
   -> [Declaration] -- ^ The module contents
-moduleDecls i es =
-  (Fix (VariableDecl Local (Name $ L.toStrict $ "s_" <> L.pack (show i)) (EnumType (Start 0) (End 4)) (int 0))) :
+moduleDecls i es
+  = Local # state i .= (EnumType (Start 0) (End 4), int 0)
+  :
   (Fix (Action Nothing (var (state i) `equals` intExp 0) (initDistribute i es))) :
   (Fix (Action (Just "attack") (var (state i) `equals` intExp 1) (attackUpdates i))) :
   (Fix (Action Nothing ((var (state i) `equals` intExp 2) `and` (otherLevels i es `notEquals` intExp 0)) (redisPolicy i es))) :

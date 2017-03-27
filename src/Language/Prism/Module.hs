@@ -25,6 +25,7 @@ module Language.Prism.Module
 , var
 , call
 , (~>)
+, (!~>)
 , (.=!)
 , (.=)
 , (#)
@@ -32,6 +33,7 @@ module Language.Prism.Module
 , (!-!)
 , (!*!)
 , (!/!)
+, (!?!)
   -- ** Value shorthands
 , double
 , int
@@ -81,9 +83,13 @@ data DeclarationF next
 action :: Expression -> [(Expression, Update)] -> Maybe Name -> Declaration
 action guard update n = Fix (Action n guard update)
 
-(~>) :: Expression -> [(Expression, Update)] -> Maybe Name -> Declaration
-(~>) = action
+(~>) :: Expression -> [(Expression, Update)] -> Name -> Declaration
+(~>) e u n = action e u (Just n)
 infixl 7 ~>
+
+(!~>) :: Expression -> [(Expression, Update)] -> Declaration
+(!~>) e u = action e u Nothing
+infixl 7 !~>
 
 constantDecl :: Name -> Value -> Declaration
 constantDecl n v = Fix (ConstantDecl n v)
@@ -148,6 +154,7 @@ data ExpressionF next
   | BinaryOperator BinaryOperator next next
   | Call Name [next]
   | Not next
+  | Ternary next next next
   deriving (Eq, Functor, Ord, Read, Show)
 
 constant :: Value -> Expression
@@ -182,6 +189,10 @@ infixl 7 !*!
 (!/!) :: Expression -> Expression -> Expression
 (!/!) = op Divide
 infixl 7 !/!
+
+(!?!) :: Expression -> Expression -> Expression -> Expression
+(!?!) e1 e2 e3 = Fix (Ternary e1 e2 e3)
+infixr 1 !?!
 
 data BinaryOperator
   = Add
