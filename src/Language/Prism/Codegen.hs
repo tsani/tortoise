@@ -104,7 +104,8 @@ updateExpression
   -- ^ Expression that evaluates to number of bots received
   -- by enemy.
 updateExpression n i es g
-  = Fix $ Call "floor" 
+  = Fix $ BinaryOperator Add (Fix $ Variable $ numBotsName i) $
+    Fix $ Call "floor" 
     [ Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide
       (g i)
       (summation $ fmap (\x -> g x) es)
