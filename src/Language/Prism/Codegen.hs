@@ -17,12 +17,19 @@ data InitSettings
   , baseLevels :: [(Int, Int)]
   -- ^ Pairs of monster IDs and their corresponding
   -- base levels.
+  , exponentArg :: Double
+  -- ^ Exponent used in g(x) = x^a
+  , efficiency :: Double
+  -- ^ Efficiency of robots
   }
 
 declSettings :: InitSettings -> [Declaration]
 declSettings InitSettings{..}
-  = Fix (ConstantDecl "N" (int numBots))
-  : declLevels baseLevels
+  = Fix (ConstantDecl "N" (int numBots)) :
+  (Fix (ConstantDecl "e" (double 2.71828))) :
+  (Fix (ConstantDecl "a" (double exponentArg))) :
+  (Fix (ConstantDecl "c" (double efficiency))) : 
+  declLevels baseLevels
 
 declLevels :: [(Int, Int)] -> [Declaration]
 declLevels [] = []
@@ -94,9 +101,11 @@ updateExpression
   -- ^ Expression that evaluates to number of bots received
   -- by enemy.
 updateExpression n i es g
-  = Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide
-    (g i)
-    (summation $ fmap (\x -> g x) es)
+  = Fix $ Call "floor" 
+    [ Fix $ BinaryOperator Multiply (Fix $ Variable n) $ Fix $ BinaryOperator Divide
+      (g i)
+      (summation $ fmap (\x -> g x) es)
+    ]
 
 -- | Example of a g(x) scaling function (scales adjusted level)
 -- for a given enemy ID.
@@ -148,7 +157,7 @@ attackUpdates i
 -- evaluated at adjustedLevel.
 expCdf :: Expression -> Expression
 expCdf adjustedLevel = Fix $ BinaryOperator Subtract (intExp 1)
-  $ Fix $ Call "exp" [Fix $ BinaryOperator Subtract (intExp 0) adjustedLevel]
+  $ Fix $ Call "pow" [Fix $ Variable "e", Fix $ BinaryOperator Subtract (intExp 0) adjustedLevel]
 
 -- | Provides the redistribution policy given enemy ID
 -- and rest of IDs. Updates must be performed on each enemy except
