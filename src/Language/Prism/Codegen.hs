@@ -121,7 +121,10 @@ scale i
 adjLevelExp :: Int -> Expression
 adjLevelExp i = Fix $
   BinaryOperator Divide (Fix $ Variable (enemyLevelName i))
-  (Fix $ BinaryOperator Multiply (Fix $ Variable "c") (Fix $ Variable (numBotsName i)))
+  (Fix $ BinaryOperator Add
+    (Fix $ BinaryOperator Multiply (Fix $ Variable "c") (Fix $ Variable (numBotsName i)))
+    (Fix $ Constant $ int 1)
+  )
 
 -- | Provides the summation over a list of expressions.
 summation :: [Expression] -> Expression
