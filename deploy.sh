@@ -43,7 +43,7 @@ fi
 
 if test -n "$PROPERTIES" ; then
     echo "running PRISM"
-    prism_ -importmodel "\${OUTNAME}.all" "$PROPERTIES"
+    prism_ -importmodel "\${OUTNAME}.all" "$PROPERTIES" > "\${OUTNAME}.results"
 fi
 
 EOF

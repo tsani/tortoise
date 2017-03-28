@@ -1,8 +1,7 @@
 #!/bin/bash
 
-MACHINE="$1" # the machine to build the models on
-
 parallel \
+    -j 7
     -a <(echo '3g') \
     -a <(echo '3g') \
     -a <(echo '200') \
