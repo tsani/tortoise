@@ -15,4 +15,4 @@ parallel \
             ./format-monster-2.sh
     ) \
     -a <(echo 'ghost-1') \
-    wrapper.sh
+    ./wrapper.sh
