@@ -241,9 +241,9 @@ allOtherDead
   :: Int
   -> [Int]
   -> Expression
-allOtherDead i es
-  = let es' = filter (/= i) es
-    in conjunction $ fmap (var . enemyDeadName) es'
+allOtherDead i es = case filter (/= i) es of
+  [] -> true
+  es'@(_:_) -> conjunction (map (var . enemyDeadName) es')
 
 disjunction :: [Expression] -> Expression
 disjunction [] = error "Empty list passed to disjunction."
