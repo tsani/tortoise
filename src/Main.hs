@@ -77,11 +77,8 @@ initSet = InitSettings
   , lethality = 0.5
   }
 
-preamble :: String
-preamble = "dtmc\nrewards\n    [attack] true : 1;\nendrewards\n"
-
 validate :: InitSettings -> IO ()
-validate InitSettings{..} = 
+validate InitSettings{..} =
   when (lethality < 0 || lethality > 1) $
     die "Lethality must be in [0,1]"
 
@@ -89,5 +86,4 @@ main :: IO ()
 main = do
   o <- execParser opts
   validate o
-  putStrLn preamble
   T.putStrLn $ pretty $ codegen o
