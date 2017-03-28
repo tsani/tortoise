@@ -187,9 +187,6 @@ redisPolicy i es = [(intExp 1, Update $ move' : kill : u)] where
   -- ^ Move to state 3
   kill = setDead i
 
--- resetLevel :: Int -> (Name, Expression)
--- resetLevel i = (enemyLevelName i, intExp 0)
-
 -- | Provide the update for setting the 'dead' flag on
 -- the ith enemy.
 setDead :: Int -> (Name, Expression)
