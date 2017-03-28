@@ -8,7 +8,7 @@ OUTNAME="$(
 )"
 
 prism_() {
-    prism -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
+    prism -v -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
 }
 
 run() {
