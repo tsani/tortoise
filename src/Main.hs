@@ -41,8 +41,8 @@ initExpArg = option auto
   )
 
 p :: Parser InitSettings
-p = InitSettings 
-  <$> initBots 
+p = InitSettings
+  <$> initBots
   <*> initEnemies
   <*> initEff
   <*> initExpArg
@@ -62,11 +62,7 @@ initSet = InitSettings
      , exponentArg = 1.0
      }
 
-preamble :: String
-preamble = "dtmc\nrewards\n    [attack] true : 1;\nendrewards\n"
-
 main :: IO ()
 main = do
   o <- execParser opts
-  putStrLn preamble
   T.putStrLn $ pretty $ codegen o

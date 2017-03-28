@@ -20,6 +20,8 @@ prettyDeclarationF
   -> P Name
   -> PF DeclarationF
 prettyDeclarationF ppUpdate ppExpr ppType ppVal ppName = \case
+  Formula name expr -> "formula" <+> ppName name <+> "=" <+> ppExpr expr
+  Label name expr -> "label" <+> ppName name <+> "=" <+> ppExpr expr
   ConstantDecl name val -> let name' = ppName name ; val' = ppVal val in
     case val of
       IntegerValue _ -> "const int" <+> name' <+> "=" <+> val' <> semi
@@ -95,14 +97,36 @@ prettyType = \case
   EnumType (Start s) (End e) -> "[" <> PP.int s <> ".." <> PP.int e <> "]"
   BooleanType -> "bool"
 
-pretty :: [Declaration] -> Text
-pretty = displayTStrict . renderPretty 1.0 maxBound . vcat . map phi where
+prettyModel :: P Model
+prettyModel DTMC = "dtmc"
+
+prettyRewards :: P Name -> P Expression -> P Reward
+prettyRewards ppName ppExpr (Reward n e1 e2) =
+  maybe "" (brackets . ppName) n <+> ppExpr e1 <+> ":" <+> ppExpr e2 <> ";"
+
+prettyRewardStructure :: P Name -> P Reward -> P RewardStructure
+prettyRewardStructure ppName ppReward (Rewards n rs) =
+  "rewards" <+> maybe "" (dquotes . ppName) n <$$>
+  indent 4 (vcat (map ppReward rs)) <$$>
+  "endrewards"
+
+pretty :: Program -> Text
+pretty = displayTStrict . renderPretty 1.0 maxBound . phi where
+  phi (Program m rs ds)
+    = prettyModel m
+    <$$> vcat (map pRewardStructure rs)
+    <$$> vcat (map pDeclaration ds)
+
+  pReward = prettyRewards prettyName pExpression
+
+  pRewardStructure = prettyRewardStructure prettyName pReward
+
   pExpression
     = cata (prettyExpressionF prettyValue prettyName prettyBinaryOperator)
 
   pUpdate = prettyUpdate pExpression prettyName
 
-  phi
+  pDeclaration
     = cata (
       prettyDeclarationF pUpdate pExpression prettyType prettyValue prettyName
     )

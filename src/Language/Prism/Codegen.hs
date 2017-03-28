@@ -26,11 +26,12 @@ data InitSettings
 
 -- | Produces the PRISM file preamble constants.
 declSettings :: InitSettings -> [Declaration]
-declSettings InitSettings{..} 
-  = Global # "N" .= (EnumType (Start 0) (End numBots), (int numBots)) 
-  : (Fix (ConstantDecl "e" (double 2.71828))) 
-  : (Fix (ConstantDecl "a" (double exponentArg))) 
-  : (Fix (ConstantDecl "c" (double efficiency))) 
+declSettings InitSettings{..}
+  = Global # "N" .= (EnumType (Start 0) (End numBots), (int numBots))
+  : "e" .=! double 2.71828
+  : "a" .=! double exponentArg
+  : "c" .=! double efficiency
+  : "initialN" .=! int numBots
   : declLevels numBots baseLevels
 
 -- | Produces the PRISM file globals for keeping track
@@ -246,9 +247,16 @@ conjunction (x:xs) = x `and` disjunction xs
 
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
-codegen :: InitSettings -> [Declaration]
-codegen set
-  = declSettings set ++ (genModules $ fst <$> (baseLevels set))
+codegen :: InitSettings -> Program
+codegen set = Program DTMC
+  [ Rewards (Just "attacks")
+    [ "attack" # true +=> intExp 1
+    ]
+  , Rewards (Just "cas_1")
+    [ (var (state 1) !==! intExp 5) += intExp 1
+    ]
+  ]
+  (declSettings set ++ (genModules $ fst <$> (baseLevels set)))
 
 -- | Produce list of declarations corresponding to the
 -- composed synchronized transition system.

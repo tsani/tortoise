@@ -5,8 +5,16 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Language.Prism.Module
-( -- * Declarations
-  Declaration
+( -- * Program
+  Program(..)
+, Model(..)
+  -- * Rewards
+, RewardStructure(..)
+, Reward(..)
+, (+=>)
+, (+=)
+  -- * Declarations
+, Declaration
 , DeclarationF(..)
 , Update(..)
 , Scope(..)
@@ -42,8 +50,15 @@ module Language.Prism.Module
 , (!<!)
 , (!>!)
 , (!>=!)
-, intExp
 , certainly
+, formula
+, label
+, (~=)
+, (#=)
+  -- ** Expression shorthands
+, intExp
+, true
+, false
   -- ** Value shorthands
 , double
 , int
@@ -71,6 +86,33 @@ import Data.Text ( Text )
 
 import Prelude hiding ( and, or, not )
 
+data Program
+  = Program Model [RewardStructure] [Declaration]
+
+data Model
+  = DTMC
+
+data RewardStructure
+  = Rewards (Maybe Name) [Reward]
+
+data Reward
+  = Reward
+    -- | The action name reward; @Nothing@ indicates a state reward.
+    (Maybe Name)
+    -- | A guard to check when the action or state is entered.
+    -- Note that in a state reward, the guard identifies the state.
+    Expression
+    -- | The amount to reward by.
+    Expression
+
+(+=>) :: Expression -> Expression -> Name -> Reward
+(+=>) e1 e2 n = Reward (Just n) e1 e2
+infixl 7 +=>
+
+(+=) :: Expression -> Expression -> Reward
+(+=) e1 e2 = Reward Nothing e1 e2
+infixl 7 +=
+
 data DeclarationF next
   -- | e.g. @const double init_coal = 10@
   = ConstantDecl
@@ -82,6 +124,12 @@ data DeclarationF next
     Name
     Type
     Value
+  | Formula
+    Name
+    Expression
+  | Label
+    Name
+    Expression
   | Action
     (Maybe Name) -- ^ name for the action
     Expression -- ^ guard
@@ -90,6 +138,20 @@ data DeclarationF next
     Name
     [next]
   deriving (Eq, Functor, Ord, Read, Show)
+
+formula :: Name -> Expression -> Declaration
+formula n e = Fix (Formula n e)
+
+(~=) :: Name -> Expression -> Declaration
+(~=) = formula
+infixl 7 ~=
+
+label :: Name -> Expression -> Declaration
+label n e = Fix (Label n e)
+
+(#=) :: Name -> Expression -> Declaration
+(#=) = label
+infixl 7 #=
 
 action :: Expression -> [(Expression, Update)] -> Maybe Name -> Declaration
 action guard update n = Fix (Action n guard update)
@@ -208,6 +270,12 @@ data ExpressionF next
 
 constant :: Value -> Expression
 constant = Fix . Constant
+
+true :: Expression
+true = constant (bool True)
+
+false :: Expression
+false = constant (bool False)
 
 var :: Name -> Expression
 var = Fix . Variable
