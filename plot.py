@@ -105,37 +105,74 @@ def get_2d_data(param_name, prop, pattern):
         tups.append( (float(x), float(y)) )
     return sorted(tups, key=lambda t: t[0])
 
-def main():
+def fig1():
+    fig = plt.figure()
+    ax = fig.add_subplot(111) #, projection='3d')
+
     data = get_2d_data(
         'exponent',
         'P=? [ F s_1=4 ]',
-        # 'results/*',
         'results/model_50_[[](1-50),(2,50)[]]_1.0_*_0.25.csv',
     )
+    ax.plot([t[0] for t in data], [t[1] for t in data], label='d=50')
 
-    # X = np.array(sorted([t[0] for t in data]))
-    # Y = np.array(sorted([t[1] for t in data]))
-    # X, Y = np.meshgrid(X, Y)
+    data = get_2d_data(
+        'exponent',
+        'P=? [ F s_1=4 ]',
+        'results/model_50_[[](1-100),(2,100)[]]_1.0_*_0.25.csv',
+    )
+    ax.plot([t[0] for t in data], [t[1] for t in data], label='d=100')
 
-    # table = dict(
-    #     ((t[0], t[1]), t[2])
-    #     for t
-    #     in data
-    # )
-
-    # Z = np.array([table[(x, y)] for x, y in zip(np.ravel(X), np.ravel(Y))])
-    # Z = Z.reshape(X.shape)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111) #, projection='3d')
-    # ax.plot_surface(X,Y,Z)
-    ax.plot([t[0] for t in data], [t[1] for t in data])
+    data = get_2d_data(
+        'exponent',
+        'P=? [ F s_1=4 ]',
+        'results/model_50_[[](1-150),(2,150)[]]_1.0_*_0.25.csv',
+    )
+    ax.plot([t[0] for t in data], [t[1] for t in data], label='d=150')
 
     plt.ylabel('success probability')
     plt.xlabel('exponent')
+    plt.legend()
 
     plt.show()
-    fig.savefig('asdf.png')
+    fig.savefig('fig1.png')
+
+def fig2():
+    fig = plt.figure()
+    ax = fig.add_subplot(111) #, projection='3d')
+
+    prop = 'P=? [ F s_1=4&N>=0.5*initialN ]'
+
+    data = get_2d_data(
+        'exponent',
+        prop,
+        'results/model_50_[[](1-50),(2,50)[]]_1.0_*_0.25.csv',
+    )
+    ax.plot([t[0] for t in data], [t[1] for t in data])
+
+    data = get_2d_data(
+        'exponent',
+        prop,
+        'results/model_50_[[](1-100),(2,100)[]]_1.0_*_0.25.csv',
+    )
+    ax.plot([t[0] for t in data], [t[1] for t in data])
+
+    data = get_2d_data(
+        'exponent',
+        prop,
+        'results/model_50_[[](1-150),(2,150)[]]_1.0_*_0.25.csv',
+    )
+    ax.plot([t[0] for t in data], [t[1] for t in data])
+
+    plt.ylabel('more than half of bots survive')
+    plt.xlabel('exponent')
+
+    plt.show()
+    fig.savefig('fig2.png')
+
+def fig3():
+    "P=? [ G (s_1=1=>(X s_1=2)) ]"
 
 if __name__ == '__main__':
-    main()
+    fig1()
+    fig2()
