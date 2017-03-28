@@ -17,4 +17,5 @@ run() {
 }
 
 mkdir -p results
+echo "Hello"
 prism_ <(run) "$PROPERTIES" -exportresults "results/${OUTNAME}.csv:csv"
