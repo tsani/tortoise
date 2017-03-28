@@ -3,7 +3,7 @@
 # Run an experiment. Model construction is skipped if model files are detected.
 
 OUTNAME="$(
-    echo "model-${NUM_BOTS}-${ENEMIES}-${EFFICIENCY}-${EXPONENT}" |
+    echo "model_${NUM_BOTS}_${ENEMIES}_${EFFICIENCY}_${EXPONENT}_${LETHALITY}" |
     sed 's/,/-/'
 )"
 
