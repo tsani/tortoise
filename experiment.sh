@@ -13,4 +13,4 @@ run() {
         -l "$LETHALITY"
 }
 
-prism_ <(run) "$PROPERTIES" | tee "${OUTNAME}.result"
+prism_ <(run) "$PROPERTIES" -exportresults "${OUTNAME}.txt"
