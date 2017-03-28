@@ -22,6 +22,8 @@ data InitSettings
   -- ^ Exponent used in g(x) = x^a
   , efficiency :: Double
   -- ^ Efficiency of robots
+  , lethality :: Double
+  -- ^ Lethality of a round of combat. Must be in [0,1].
   }
 
 -- | Produces the PRISM file preamble constants.
@@ -32,6 +34,7 @@ declSettings InitSettings{..}
   : "a" .=! double exponentArg
   : "c" .=! double efficiency
   : "initialN" .=! int numBots
+  : "b" .=! (double lethality)
   : declLevels numBots baseLevels
 
 -- | Produces the PRISM file globals for keeping track
@@ -212,14 +215,21 @@ moduleDecls i es =
   -- ^ Case where summation over other states is zero
   , "attack" # ((inState 3) !&&! (not $ allOtherDead i es)) ~> certainly Noop
   , "done" # inState 3 ~> certainly (Update [move i 4])
-  , ((inState 5) `and` (var (numBotsName i) !>! intExp 0) `and` (var "N" !>! intExp 0)) !~> (certainly $ suffer i)
+  , ((inState 5) `and` (var (numBotsName i) !>! intExp 0) `and` (var "N" !>! intExp 0)) !~> (suffer i)
   ]
   where
     inState n = var (state i) !==! intExp n
-    suffer i' = Update [ move i' 1
-                      , (numBotsName i', var (numBotsName i') !-! intExp 1)
-                      , ("N", var "N" !-! intExp 1)
-                      ]
+    suffer i' = [ ( var "b"
+                  , Update [ move i' 1
+                           , (numBotsName i', var (numBotsName i') !-! intExp 1)
+                           , ("N", var "N" !-! intExp 1)
+                           ]
+                  )
+                , ( intExp 1 !-! (var "b")
+                  , Update [ move i' 1 ]
+                  )
+                ]
+
 
 -- | Move state variable to j.
 move :: Int -> Int -> (Name, Expression)

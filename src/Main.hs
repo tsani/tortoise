@@ -1,10 +1,23 @@
+{-# LANGUAGE RecordWildCards #-}
 module Main where
+
+import Control.Monad ( when )
 
 import qualified Data.Text.IO as T
 import Language.Prism.Pretty
 import Language.Prism.Codegen
 
 import Options.Applicative
+
+import System.Exit
+
+initLethal :: Parser Double
+initLethal = option auto
+  ( long "lethal"
+  <> short 'l'
+  <> metavar "LETHALITY"
+  <> help "Probability of losing a bot in a round of combat"
+  )
 
 initBots :: Parser Int
 initBots = option auto
@@ -46,6 +59,7 @@ p = InitSettings
   <*> initEnemies
   <*> initEff
   <*> initExpArg
+  <*> initLethal
 
 opts :: ParserInfo InitSettings
 opts = info (p <**> helper)
@@ -56,13 +70,24 @@ opts = info (p <**> helper)
 
 initSet :: InitSettings
 initSet = InitSettings
-     { numBots = 10000
-     , baseLevels = [(1, 10), (2, 60), (3, 37)]
-     , efficiency = 1.0
-     , exponentArg = 1.0
-     }
+  { numBots = 10000
+  , baseLevels = [(1, 10), (2, 60), (3, 37)]
+  , efficiency = 1.0
+  , exponentArg = 1.0
+  , lethality = 0.5
+  }
+
+preamble :: String
+preamble = "dtmc\nrewards\n    [attack] true : 1;\nendrewards\n"
+
+validate :: InitSettings -> IO ()
+validate InitSettings{..} = 
+  when (lethality < 0 || lethality > 1) $
+    die "Lethality must be in [0,1]"
 
 main :: IO ()
 main = do
   o <- execParser opts
+  validate o
+  putStrLn preamble
   T.putStrLn $ pretty $ codegen o
