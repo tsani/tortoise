@@ -8,7 +8,7 @@ prism_() {
     prism -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
 }
 
-if [ "$FORCE" = '1' ] ! test -e "${OUTNAME}.sta" ; then
+if [ "$FORCE" = '1' -o ! -e "${OUTNAME}.sta" ] ; then
     echo "Constructing model because it doesn't already exist."
     prism_ -exportmodel "${OUTNAME}.all" \
         <(./run.sh -n "$NUM_BOTS" -e "$EFFICIENCY" -a "$EXPONENT" -m "$ENEMIES")
