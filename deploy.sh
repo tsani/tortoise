@@ -1,5 +1,6 @@
 #!/bin/bash
 
+ssh tortoise@$1 bash <<'EOF'
 set -e
 
 die() {
@@ -17,20 +18,4 @@ git reset --hard origin/master
 echo "building code generator"
 cabal install --only-dependencies
 cabal build >/dev/null 2>&1 || die 'cabal build failed'
-
-OUTNAME="model-${NUM_BOTS}-${ENEMIES}-${EFFICIENCY}-${EXPONENT}"
-
-prism_() {
-    prism -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
-}
-
-if ! test -e "${OUTNAME}.sta" ; then
-    echo "Constructing model because it doesn't already exist."
-    prism_ -exportmodel "${OUTNAME}.all" \
-        <(./run.sh -n "$NUM_BOTS" -e "$EFFICIENCY" -a "$EXPONENT" -m "$ENEMIES")
-fi
-
-if test -n "$PROPERTIES" ; then
-    echo "running PRISM"
-    prism_ -importmodel "${OUTNAME}.all" "$PROPERTIES" > "${OUTNAME}.results"
-fi
+EOF
