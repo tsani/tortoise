@@ -8,19 +8,9 @@ prism_() {
     prism -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
 }
 
-if [ "$FORCE" = '1' -o ! -e "${OUTNAME}.sta" ] ; then
-    prism_ -exportmodel "${OUTNAME}.all" \
-        <(
-            ./run.sh \
-                -n "$NUM_BOTS" \
-                -e "$EFFICIENCY" \
-                -a "$EXPONENT" \
-                -m "$ENEMIES" \
-                -l "$LETHALITY"
-        )
-fi
+run() {
+    ./run.sh -n "$NUM_BOTS" -e "$EFFICIENCY" -a "$EXPONENT" -m "$ENEMIES" \
+        -l "$LETHALITY"
+}
 
-if test -n "$PROPERTIES" ; then
-    echo "running PRISM"
-    prism_ -importmodel "${OUTNAME}.all" "$PROPERTIES" | tee "${OUTNAME}.results"
-fi
+prism_ <(run) "$PROPERTIES" | tee "${OUTNAME}.result"
