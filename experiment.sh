@@ -2,7 +2,10 @@
 
 # Run an experiment. Model construction is skipped if model files are detected.
 
-OUTNAME="model-${NUM_BOTS}-${ENEMIES}-${EFFICIENCY}-${EXPONENT}"
+OUTNAME="$(
+    echo "model-${NUM_BOTS}-${ENEMIES}-${EFFICIENCY}-${EXPONENT}" |
+    sed 's/,/-/'
+)"
 
 prism_() {
     prism -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
