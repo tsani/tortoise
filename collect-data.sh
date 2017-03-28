@@ -1,13 +1,18 @@
 #!/bin/bash
 
+# parallel -j 6 \
+#     -a <(echo '3g') \
+#     -a <(seq 5 5 100) \
+#     echo
+
 parallel \
-    -j 7
+    -j 7 \
     -a <(echo '3g') \
     -a <(echo '3g') \
     -a <(echo '200') \
     -a <(echo '1') \
     -a <(echo '1') \
-    -a <(
+    -a <( \
         parallel -j 1 \
             -a <(seq 5 5 100) \
             -a <(seq 5 5 100) \
