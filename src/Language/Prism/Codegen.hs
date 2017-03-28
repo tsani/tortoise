@@ -255,15 +255,9 @@ conjunction (x:xs) = x `and` disjunction xs
 -- | Generate list of declarations containing all globals,
 -- module definitions, and the resulting synchronized TS.
 codegen :: InitSettings -> Program
-codegen set = Program DTMC
-  [ Rewards (Just "attacks")
-    [ "attack" # true +=> intExp 1
-    ]
-  , Rewards (Just "cas_1")
-    [ (var (state 1) !==! intExp 5) += intExp 1
-    ]
-  ]
-  (declSettings set ++ (genModules $ fst <$> (baseLevels set)))
+codegen set = Program DTMC rewards decls where
+  rewards = [Rewards (Just "attacks") [ "attack" # true +=> intExp 1 ]]
+  decls = declSettings set ++ (genModules $ fst <$> (baseLevels set))
 
 -- | Produce list of declarations corresponding to the
 -- composed synchronized transition system.
