@@ -17,4 +17,4 @@ P=? [ F s_1 = 4 & N >= 0.8 * initialN ]
 P=? [ F s_1 = 4 & N >= 0.9 * initialN ]
 
 // probability that the first enemy dies in the first hit
-P=? [ G (s_1 = 1 => X (s_1 = 2)) ]
+P=? [ G (s_1 = 1 => (X s_1 = 2)) ]
