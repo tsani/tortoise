@@ -9,7 +9,6 @@ prism_() {
 }
 
 if [ "$FORCE" = '1' -o ! -e "${OUTNAME}.sta" ] ; then
-    echo "Constructing model because it doesn't already exist."
     prism_ -exportmodel "${OUTNAME}.all" \
         <(./run.sh -n "$NUM_BOTS" -e "$EFFICIENCY" -a "$EXPONENT" -m "$ENEMIES")
 fi
