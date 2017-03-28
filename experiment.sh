@@ -10,7 +10,14 @@ prism_() {
 
 if [ "$FORCE" = '1' -o ! -e "${OUTNAME}.sta" ] ; then
     prism_ -exportmodel "${OUTNAME}.all" \
-        <(./run.sh -n "$NUM_BOTS" -e "$EFFICIENCY" -a "$EXPONENT" -m "$ENEMIES")
+        <(
+            ./run.sh \
+                -n "$NUM_BOTS" \
+                -e "$EFFICIENCY" \
+                -a "$EXPONENT" \
+                -m "$ENEMIES" \
+                -l "$LETHALITY"
+        )
 fi
 
 if test -n "$PROPERTIES" ; then

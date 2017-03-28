@@ -14,4 +14,5 @@ exec parallel \
             ./format-monster-2.sh
     ) \
     -a <(echo 'properties.pf') \
+    -a <(echo '1') \
     ./wrapper.sh
