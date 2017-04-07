@@ -35,7 +35,10 @@ declSettings InitSettings{..}
   : "c" .=! double efficiency
   : "initialN" .=! int numBots
   : "b" .=! (double lethality)
+  : "some_battle_won" #= disjunction (map (wonAgainst . fst) baseLevels)
   : declLevels numBots baseLevels
+  where
+    wonAgainst i = var (state i) !==! intExp 3
 
 -- | Produces the PRISM file globals for keeping track
 -- of changing values.
