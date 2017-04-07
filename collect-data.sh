@@ -11,10 +11,3 @@ exec parallel \
     -a <(echo 'properties.pf') \
     -a <(echo '0.25') \
     ./wrapper.sh
-
-# \
-#         parallel -j 1 \
-#             -a <(echo 75 ; echo 125) \
-#             -a <(echo 75 ; echo 125) \
-#             ./format-monster-2.sh
-#     ) \
