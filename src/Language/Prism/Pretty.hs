@@ -21,7 +21,7 @@ prettyDeclarationF
   -> PF DeclarationF
 prettyDeclarationF ppUpdate ppExpr ppType ppVal ppName = \case
   Formula name expr -> "formula" <+> ppName name <+> "=" <+> ppExpr expr
-  Label name expr -> "label" <+> ppName name <+> "=" <+> ppExpr expr
+  Label name expr -> "label" <+> dquotes (ppName name) <+> "=" <+> ppExpr expr
   ConstantDecl name val -> let name' = ppName name ; val' = ppVal val in
     case val of
       IntegerValue _ -> "const int" <+> name' <+> "=" <+> val' <> semi
