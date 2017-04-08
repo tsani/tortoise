@@ -36,15 +36,15 @@ declSettings InitSettings{..}
   : "initialN" .=! int numBots
   : "b" .=! (double lethality)
   : "some_battle_won" #= disjunction (map (wonAgainst . fst) baseLevels)
-  : "some_crit" #= disjunction (map (isCrit . fst) baseLevels)
+  -- : "some_crit" #= disjunction (map (isCrit . fst) baseLevels)
   : declLevels numBots baseLevels
   where
     wonAgainst i = var (state i) !==! intExp 3
-    isCrit i
-      = always (
-        (s !==! intExp 1) `implies` next (s !==! intExp 2)
-      ) where
-        s = var (state i)
+    -- isCrit i
+    --   = always (
+    --     (s !==! intExp 1) `implies` next (s !==! intExp 2)
+    --   ) where
+    --     s = var (state i)
 
 -- | Produces the PRISM file globals for keeping track
 -- of changing values.
