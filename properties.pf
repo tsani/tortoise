@@ -1,6 +1,6 @@
 P=? [ F s_1 = 4 ] // all battles end, due to sync on done action to state 4
 
-P=? [ F some_battle_won ]
+P=? [ F "some_battle_won" ]
 
 P=? [ F N = 0 ] // probability that everyone dies
 
