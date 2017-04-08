@@ -8,9 +8,9 @@ exec parallel \
     -a <(seq 0.05 0.1 1.95) \
     -a <(seq 0.1 0.25 5.0) \
     -a <(
-        ./format-monster-2.sh 25 200 ;
-        ./format-monster-2.sh 50 150 ;
-        ./format-monster-2.sh 50 50 ;
+        ./format-monster-2.sh 100 100 ;
+        ./format-monster-2.sh 150 150 ;
+        ./format-monster-2.sh 200 200 ;
     ) \
     -a <(echo 'properties.pf') \
     -a <(seq 0.05 0.1 0.95) \
