@@ -16,6 +16,6 @@ run() {
         -l "$LETHALITY"
 }
 
-mkdir -p results
+mkdir -p results dump
 echo "Hello"
-prism_ <(run) "$PROPERTIES" -exportresults "results/${OUTNAME}.csv:csv"
+prism_ <(run | tee dump/${OUTNAME}.pm) "$PROPERTIES" -exportresults "results/${OUTNAME}.csv:csv"
