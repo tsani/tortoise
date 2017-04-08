@@ -22,6 +22,7 @@ module Language.Prism.Module
 , Expression
 , ExpressionF(..)
 , BinaryOperator(..)
+, UnaryOperator(..)
 , Value(..)
 , Type(..)
 , typeOf
@@ -50,6 +51,8 @@ module Language.Prism.Module
 , (!<!)
 , (!>!)
 , (!>=!)
+, (!=>!)
+, implies
 , certainly
 , formula
 , label
@@ -73,6 +76,10 @@ module Language.Prism.Module
 , lessThan
 , greaterThan
 , greaterThanEquals
+  -- ** Modal operators
+, next
+, always
+, eventually
   -- * Reexports
 , cata
 , Text
@@ -222,7 +229,16 @@ lessThanEquals e1 e2 = Fix (BinaryOperator LessThanEquals e1 e2)
 infix 4 !<=!
 
 not :: Expression -> Expression
-not = Fix . Not
+not = Fix . UnaryOperator Not
+
+eventually :: Expression -> Expression
+eventually = Fix . UnaryOperator Eventually
+
+always :: Expression -> Expression
+always = Fix . UnaryOperator Always
+
+next :: Expression -> Expression
+next = Fix . UnaryOperator Next
 
 and :: Expression -> Expression -> Expression
 and g1 g2 = Fix (BinaryOperator And g1 g2)
@@ -259,14 +275,28 @@ greaterThanEquals e1 e2 = Fix (BinaryOperator GreaterThan e1 e2)
 (!>=!) = greaterThanEquals
 infix 4 !>=!
 
+implies :: Expression -> Expression -> Expression
+implies e1 e2 = Fix (BinaryOperator Implies e1 e2)
+
+(!=>!) :: Expression -> Expression -> Expression
+(!=>!) = implies
+infix 4 !=>!
+
 data ExpressionF next
   = Constant Value
   | Variable Name
   | BinaryOperator BinaryOperator next next
+  | UnaryOperator UnaryOperator next
   | Call Name [next]
-  | Not next
   | Ternary next next next
   deriving (Eq, Functor, Ord, Read, Show)
+
+data UnaryOperator
+  = Not
+  | Next
+  | Eventually
+  | Always
+  deriving (Eq, Ord, Read, Show)
 
 constant :: Value -> Expression
 constant = Fix . Constant
@@ -324,6 +354,7 @@ data BinaryOperator
   | GreaterThan
   | Equals
   | NotEquals
+  | Implies
   deriving (Eq, Ord, Read, Show)
 
 data Value

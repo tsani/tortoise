@@ -57,13 +57,14 @@ prettyExpressionF
   :: P Value
   -> P Name
   -> P BinaryOperator
+  -> P UnaryOperator
   -> PF ExpressionF
-prettyExpressionF ppVal ppName ppBin = \case
+prettyExpressionF ppVal ppName ppBin ppUn = \case
   Constant v -> ppVal v
   Variable name -> ppName name
   BinaryOperator b e1 e2 -> parens (e1 <+> ppBin b <+> e2)
+  UnaryOperator u e -> ppUn u <+> parens e
   Call name args -> parens (ppName name <> parens (hcat (punctuate ", " args)))
-  Not e -> parens ("!" <+> e)
   Ternary e1 e2 e3 -> parens (e1 <+> "?" <+> e2 <+> ":" <+> e3)
 
 prettyBinaryOperator :: P BinaryOperator
@@ -80,6 +81,14 @@ prettyBinaryOperator = \case
   GreaterThan -> ">"
   Equals -> "="
   NotEquals -> "!="
+  Implies -> "=>"
+
+prettyUnaryOperator :: P UnaryOperator
+prettyUnaryOperator = \case
+  Not -> "!"
+  Eventually -> "F"
+  Always -> "G"
+  Next -> "X"
 
 prettyValue :: P Value
 prettyValue = \case
@@ -121,8 +130,12 @@ pretty = displayTStrict . renderPretty 1.0 maxBound . phi where
 
   pRewardStructure = prettyRewardStructure prettyName pReward
 
-  pExpression
-    = cata (prettyExpressionF prettyValue prettyName prettyBinaryOperator)
+  pExpression = cata f where
+    f = prettyExpressionF
+      prettyValue
+      prettyName
+      prettyBinaryOperator
+      prettyUnaryOperator
 
   pUpdate = prettyUpdate pExpression prettyName
 
