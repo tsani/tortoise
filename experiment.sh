@@ -46,6 +46,7 @@ case "$ACTION" in
             echo "generating: $RESULTFILE"
             fullrun
         fi
+        ;;
     "run")
         echo "generating: $RESULTFILE"
         ;;
