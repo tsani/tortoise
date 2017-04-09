@@ -24,6 +24,13 @@ check() {
     test -e "$RESULTFILE"
 }
 
+fullrun() {
+    prism_ \
+        <(run | tee $DUMPFILE) \
+        "$PROPERTIES" \
+        -exportresults "${RESULTFILE}:csv" > "$LOGFILE" 2>&1
+}
+
 mkdir -p results dump logs
 
 case "$ACTION" in
@@ -32,11 +39,15 @@ case "$ACTION" in
             echo "missing: $RESULTFILE"
         fi
         ;;
+    "check-run")
+        if check ; then
+            echo "skipping: $RESULTFILE"
+        else
+            echo "generating: $RESULTFILE"
+            fullrun
+        fi
     "run")
-        prism_ \
-            <(run | tee $DUMPFILE) \
-            "$PROPERTIES" \
-            -exportresults "${RESULTFILE}:csv" > "$LOGFILE" 2>&1
+        echo "generating: $RESULTFILE"
         ;;
     *)
         echo "Unknown action $ACTION" >&2
