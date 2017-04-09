@@ -28,8 +28,8 @@ mkdir -p results dump logs
 
 case "$ACTION" in
     "check")
-        if check ; then
-            echo "missing\!"
+        if ! check ; then
+            echo "missing: $RESULTFILE"
         fi
         ;;
     "run")
