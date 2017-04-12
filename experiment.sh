@@ -9,7 +9,7 @@ OUTNAME="$(
 
 RESULTFILE="results/${OUTNAME}.csv"
 DUMPFILE="dump/${OUTNAME}.pm"
-LOGFILE="logs/${OUTNAME}.log"
+LOGFILE=/dev/null #"logs/${OUTNAME}.log"
 
 prism_() {
     prism -v -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
