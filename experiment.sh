@@ -61,6 +61,8 @@ case "$ACTION" in
                 fullrun
                 clear_lock
                 trap '' SIGINT
+            else
+                echo "race avoided: $RESULTFILE"
             fi
         fi
         ;;
