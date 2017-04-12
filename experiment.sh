@@ -27,7 +27,7 @@ check() {
 
 check_lock() {
     set -o noclobber
-    { > "$GUARDFILE" } &> /dev/null
+    { > "$GUARDFILE" ; } &> /dev/null
 }
 
 clear_lock() {
