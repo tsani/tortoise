@@ -10,6 +10,7 @@ OUTNAME="$(
 RESULTFILE="results/${OUTNAME}.csv"
 DUMPFILE="dump/${OUTNAME}.pm"
 LOGFILE=/dev/null #"logs/${OUTNAME}.log"
+GUARDFILE="results/locks/${OUTNAME}"
 
 prism_() {
     prism -v -dtmc -javamaxmem "$JAVA_MEM" -cuddmaxmem "$CUDD_MEM" "$@"
@@ -24,6 +25,15 @@ check() {
     test -e "$RESULTFILE"
 }
 
+check_lock() {
+    set -o noclobber
+    { > "$GUARDFILE" } &> /dev/null
+}
+
+clear_lock() {
+    rm -f "$GUARDFILE" >/dev/null
+}
+
 fullrun() {
     prism_ \
         <(run | tee $DUMPFILE) \
@@ -31,7 +41,7 @@ fullrun() {
         -exportresults "${RESULTFILE}:csv" > "$LOGFILE" 2>&1
 }
 
-mkdir -p results dump logs
+mkdir -p results/locks dump logs
 
 case "$ACTION" in
     "check")
@@ -43,8 +53,15 @@ case "$ACTION" in
         if check ; then
             echo "skipping: $RESULTFILE"
         else
-            echo "generating: $RESULTFILE"
-            fullrun
+            if check_lock ; then
+                trap clear_lock SIGINT
+                # this will make sure we clear the lock if we get interrupted
+
+                echo "generating: $RESULTFILE"
+                fullrun
+                clear_lock
+                trap '' SIGINT
+            fi
         fi
         ;;
     "run")
