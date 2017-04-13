@@ -10,3 +10,7 @@
 *.toc
 /results/
 results.csv
+bin
+include
+lib
+pip-selfcheck.json
