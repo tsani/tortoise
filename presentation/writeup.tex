@@ -92,7 +92,7 @@
 \end{frame}
 
 % The results of real world actions are often uncertain. This motivates
-% the usage of a probabilistic model to represent battles.
+% the usage of a probabilistic model to represent swarm behavior.
 % We opt for the usage of discrete time Markov chains for simplicity
 % and ease of construction. Our proposed model can be extended to
 % continuous-time if necessary.
@@ -138,8 +138,8 @@
         \item Probabilistic extension of CTL.
         \item Additional semantics involving probability thresholds
             \begin{itemize}
-                \item $ s \vdash \mathcal{P}_{\sim\lambda}(f_1 \text{ U } f_2) $
-                \item $ s \vdash \mathcal{P}_{\sim\lambda}(\square f) $
+                \item $ s \vDash \mathcal{P}_{\sim\lambda}(f_1 \text{ U } f_2) $
+                \item $ s \vDash \mathcal{P}_{\sim\lambda}(\square f) $
                 \item where $ \sim \in \{ >, <, \leq, \geq \} $
             \end{itemize}
         \item AP = $ \{ 1, \ldots, n \} $ describing the current number of
@@ -386,11 +386,59 @@
 
     \begin{itemize}
         \item PRISM code generation in Haskell
-        \item Cloud computing for model construction
+        \item Cloud computing for model construction (AWS)
             \begin{itemize}
-                \item
+                \item 16 Intel Xeon E5-2666 v3 CPUs
+                \item 30 GiB memory
             \end{itemize}
     \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]
+    \frametitle{Experimental Results (1)}
+    \scriptsize
+
+    \begin{itemize}
+        \item PCTL : $ \mathcal{P}_{?} (\Diamond (s_1 = 4)) $
+        \item 
+            PRISM : 
+            \begin{lstlisting} 
+            P=? [ F s_1 = 4 ] 
+            \end{lstlisting}
+        \item What is the probability that all battles are won?
+    \end{itemize}
+    \includegraphics[width=\textwidth]{../figs/fig1.png}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Experimental Results (2)}
+    \scriptsize
+
+    \begin{itemize}
+        \item PCTL : $ \mathcal{P}_{?} (\Diamond s_1 = 4 \wedge N \geq (0.5 * initialN)) $
+        \item 
+            PRISM : 
+            \begin{lstlisting} 
+        P=? [ F s_1 = 4 & N >= 0.5 * initialN ]
+            \end{lstlisting}
+        \item What is the probability that we win with at least half of our robots alive?
+    \end{itemize}
+    \includegraphics[width=\textwidth]{../figs/fig2.png}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Experimental Results (3)}
+    \scriptsize
+
+    \begin{itemize}
+        \item PCTL : $ \mathcal{P}_{?} (\square (s_1 = 1 \implies \bigcirc (s_1 = 2))) $
+        \item 
+            PRISM : 
+            \begin{lstlisting} 
+        P=? [ G (s_1 = 1 => (X s_1 = 2)) ]
+            \end{lstlisting}
+        \item What is the probability that the first battle concludes in one turn?
+    \end{itemize}
+    \includegraphics[width=\textwidth]{../figs/surface.png}
+\end{frame}
 \end{document}
