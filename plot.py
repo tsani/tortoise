@@ -139,8 +139,8 @@ def main():
     print(exp_leth_size)
 
     # Probability of eventual victory
-    X = np.array((list(exp_leth_var.exponent)))
-    Y = np.array((list(exp_leth_var.lethality)))
+    X = np.array(sorted(list(exp_leth_var.exponent)))
+    Y = np.array(sorted(list(exp_leth_var.lethality)))
     X, Y = np.meshgrid(X, Y)
 
     Z = []
@@ -148,7 +148,6 @@ def main():
     i = 1
     total = len(np.ravel(X))
     for x, y in zip(np.ravel(X), np.ravel(Y)):
-        print("%d out of %d." % (i, total))
         i += 1
         z = exp_leth_var[
                 isclose(exp_leth_var.exponent,
@@ -168,7 +167,7 @@ def main():
 
     print(Z)
 
-    Z = np.array(Z)
+    Z = np.array(Z).reshape(X.shape)
 
     print("print shape")
     print(Z)
@@ -177,6 +176,12 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot_surface(X,Y,Z)
+    plt.title("Probability of winning at least one battle")
+    plt.xlabel("a-Parameter")
+    plt.ylabel("Lethality")
+    ax.set_zlabel("Probability of winning at least one battle")
+
+    plt.show()
 
     # Yay pandas dataframe
 
