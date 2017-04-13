@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import pandas as pd
+
 import numpy as np
 
 import matplotlib
@@ -105,6 +107,9 @@ def get_2d_data(param_name, prop, pattern):
         tups.append( (float(x), float(y)) )
     return sorted(tups, key=lambda t: t[0])
 
+def load_data():
+
+
 def main():
     #data = get_2d_data(
     #    'exponent',
@@ -113,7 +118,8 @@ def main():
     #    'results/model_50_[[](1-50),(2,50)[]]_1.0_*_0.25.csv',
     #)
 
-    data = parse_data()
+    # data = parse_data()
+    data = load_data()
 
     X = np.array(sorted([t[0] for t in data]))
     Y = np.array(sorted([t[1] for t in data]))
