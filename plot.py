@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from sys import exit
+
 import pandas as pd
 
 import numpy as np
@@ -11,6 +13,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 from collections import namedtuple
+from numpy import isclose
 import glob
 
 Params = namedtuple(
@@ -108,9 +111,75 @@ def get_2d_data(param_name, prop, pattern):
     return sorted(tups, key=lambda t: t[0])
 
 def load_data():
-
+    d = pd.read_csv("results.csv")
+    return d
 
 def main():
+    data = load_data()
+    print(data)
+
+    # DataFrame with
+    # numbots
+    # enemies 25, 200,
+    # efficiency 1.15
+    # 
+    # varying exponent, lethality
+    print(set(data.efficiency))
+    size = len(data.efficiency)
+    exp_leth_var = data[(data.num_bots == 20) &
+            (data.num_enemies == 2) &
+            isclose(data.enemy_level_1, np.repeat(25, size)) &
+            isclose(data.enemy_level_2, np.repeat(200, size)) &
+            isclose(data.efficiency,
+                np.repeat(1.15, size),
+                rtol = 0.0001)
+            ]
+
+    exp_leth_size = len(exp_leth_var)
+    print(exp_leth_size)
+
+    # Probability of eventual victory
+    X = np.array((list(exp_leth_var.exponent)))
+    Y = np.array((list(exp_leth_var.lethality)))
+    X, Y = np.meshgrid(X, Y)
+
+    Z = []
+
+    i = 1
+    total = len(np.ravel(X))
+    for x, y in zip(np.ravel(X), np.ravel(Y)):
+        print("%d out of %d." % (i, total))
+        i += 1
+        z = exp_leth_var[
+                isclose(exp_leth_var.exponent,
+                    np.repeat(x,
+                        exp_leth_size,
+                        ),
+                    rtol = 0.001
+                    ) &
+                isclose(exp_leth_var.lethality,
+                    np.repeat(y,
+                        exp_leth_size
+                        ),
+                    rtol = 0.001
+                    )
+                ]["P=? [ F some_battle_won ]"].values[0]
+        Z.append(z)
+
+    print(Z)
+
+    Z = np.array(Z)
+
+    print("print shape")
+    print(Z)
+    print("printed shape")
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(X,Y,Z)
+
+    # Yay pandas dataframe
+
     #data = get_2d_data(
     #    'exponent',
     #    'P=? [ F s_1=4 ]',
@@ -119,31 +188,30 @@ def main():
     #)
 
     # data = parse_data()
-    data = load_data()
 
-    X = np.array(sorted([t[0] for t in data]))
-    Y = np.array(sorted([t[1] for t in data]))
-    X, Y = np.meshgrid(X, Y)
+    # X = np.array(sorted([t[0] for t in data]))
+    # Y = np.array(sorted([t[1] for t in data]))
+    # X, Y = np.meshgrid(X, Y)
 
-    table = dict(
-        ((t[0], t[1]), t[2])
-        for t
-        in data
-    )
+    # table = dict(
+    #     ((t[0], t[1]), t[2])
+    #     for t
+    #     in data
+    # )
 
-    Z = np.array([table[(x, y)] for x, y in zip(np.ravel(X), np.ravel(Y))])
-    Z = Z.reshape(X.shape)
+    # Z = np.array([table[(x, y)] for x, y in zip(np.ravel(X), np.ravel(Y))])
+    # Z = Z.reshape(X.shape)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(X,Y,Z)
-    # ax.plot([t[0] for t in data], [t[1] for t in data])
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.plot_surface(X,Y,Z)
+    # # ax.plot([t[0] for t in data], [t[1] for t in data])
 
-    plt.ylabel('level 1')
-    plt.xlabel('level 2')
+    # plt.ylabel('level 1')
+    # plt.xlabel('level 2')
 
-    plt.show()
-    fig.savefig('surface.png')
+    # plt.show()
+    # fig.savefig('surface.png')
 
 if __name__ == '__main__':
     main()
