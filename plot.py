@@ -118,6 +118,67 @@ def main():
     data = load_data()
     print(data)
 
+    '''
+    # DataFrame with
+    # numbots
+    # enemies 25, 200,
+    # prob that a proportion survive
+    print(set(data.efficiency))
+    size = len(data.efficiency)
+    eff_leth_vary = data[
+            (data.num_enemies == 2) &
+            isclose(data.enemy_level_1, np.repeat(25, size)) &
+            isclose(data.enemy_level_2, np.repeat(200, size)) &
+            isclose(data.exponent,
+                np.repeat(1.15, size),
+                rtol = 0.0001) &
+            isclose(data.efficiency,
+                np.repeat(1.85, size),
+                rtol = 0.0001) &
+            isclose(data.lethality,
+                np.repeat(0.1, size),
+                rtol = 0.0001)
+            ]
+    
+    eff_leth_vary = eff_leth_vary.sort_values(by="num_bots")
+
+    survival_indices = [
+        ("P=? [ F s_1=4&N>=0.1*initialN ]", "10% survive"),
+        ("P=? [ F s_1=4&N>=0.2*initialN ]", "20% survive"),
+        ("P=? [ F s_1=4&N>=0.3*initialN ]", "30% survive"),
+        ("P=? [ F s_1=4&N>=0.4*initialN ]", "40% survive"),
+        ("P=? [ F s_1=4&N>=0.5*initialN ]", "50% survive"),
+        ("P=? [ F s_1=4&N>=0.6*initialN ]", "60% survive"),
+        ("P=? [ F s_1=4&N>=0.7*initialN ]", "70% survive"),
+        ("P=? [ F s_1=4&N>=0.8*initialN ]", "80% survive"),
+        ("P=? [ F s_1=4&N>=0.9*initialN ]", "90% survive")
+    ]
+
+    Ns = list(eff_leth_vary.num_bots.values)
+
+    plot_lines = []
+
+    for i in survival_indices:
+        print("Currently on property %s" % i[1])
+        ls = []
+        for n in Ns:
+            ls.append(eff_leth_vary[
+                eff_leth_vary.num_bots == n
+                ][i[0]].values[0]
+                )
+        print(ls)
+        plot_lines.append(ls)
+
+    for i, l in zip(survival_indices, plot_lines):
+        plt.plot(Ns, l, label=i[1])
+
+    plt.legend()
+    plt.title("Probability of survival given proportion")
+    plt.xlabel("N (Initial number of bots)")
+    plt.ylabel("Probability of survival")
+    plt.show()
+    '''
+
     # DataFrame with
     # numbots
     # enemies 25, 200,
@@ -131,12 +192,12 @@ def main():
             isclose(data.enemy_level_1, np.repeat(25, size)) &
             isclose(data.enemy_level_2, np.repeat(200, size)) &
             isclose(data.efficiency,
-                np.repeat(1.15, size),
+                np.repeat(1.35, size),
                 rtol = 0.0001)
             ]
 
     exp_leth_size = len(exp_leth_var)
-    print(exp_leth_size)
+    print(len(exp_leth_var))
 
     # Probability of eventual victory
     X = np.array(sorted(list(exp_leth_var.exponent)))
@@ -182,6 +243,8 @@ def main():
     ax.set_zlabel("Probability of winning at least one battle")
 
     plt.show()
+    '''
+    '''
 
     # Yay pandas dataframe
 
