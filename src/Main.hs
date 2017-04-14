@@ -27,7 +27,7 @@ initBots = option auto
   <> help "Number of initial bots"
   )
 
-initEnemies :: Parser [(Int, Int)]
+initEnemies :: Parser [MonsterSpec]
 initEnemies = option auto
   ( long "enemies"
   <> short 'm'

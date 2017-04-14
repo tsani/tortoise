@@ -11,11 +11,13 @@ import Data.String ( fromString )
 import qualified Data.Text as T
 import Language.Prism.Module
 
+type MonsterSpec = (Int, Double)
+
 -- | Initial settings for the entire engagement.
 data InitSettings
   = InitSettings
   { numBots :: Int
-  , baseLevels :: [(Int, Int)]
+  , baseLevels :: [MonsterSpec]
   -- ^ Pairs of monster IDs and their corresponding
   -- base levels.
   , exponentArg :: Double
@@ -48,10 +50,10 @@ declSettings InitSettings{..}
 
 -- | Produces the PRISM file globals for keeping track
 -- of changing values.
-declLevels :: Int -> [(Int, Int)] -> [Declaration]
+declLevels :: Int -> [MonsterSpec] -> [Declaration]
 declLevels _ [] = []
 declLevels m ((l, r):ls)
-  = enemyLevelName l .=! (int r)
+  = enemyLevelName l .=! (double r)
   -- ^ Constant enemy base level
   : Global # numBotsName l .= (EnumType (Start 0) (End m), int 0)
   -- ^ Global var for bots currently on this enemy.
