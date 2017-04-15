@@ -10,4 +10,4 @@ while (( $# - 1 > 0 )) ; do
     shift
 done
 
-echo -n "($i,$1)]"
+echo "($i,$1)]"
