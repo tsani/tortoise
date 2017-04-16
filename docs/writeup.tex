@@ -7,7 +7,7 @@
 \usepackage{tikz}
 \usepackage{amsthm,amsmath,amssymb}
 \usepackage{csquotes}
-\usepackage[margin=2.0cm]{geometry}
+\usepackage[margin=3.0cm]{geometry}
 \usetikzlibrary{automata}
 \usetikzlibrary{graphs}
 
@@ -119,53 +119,52 @@ representation of a robot swarm.
 \begin{figure}
     \caption{Konur, Dixon, and Fisher's foraging swarm representation}
     \label{fig:foraging}
-    \centering
     \includegraphics[width=\textwidth]{foraging.png}
-
-    The macroscopic representation of a robotic swarm
-    shows that each robot is responsible for attempting
-    to gather "food" in order to increase the overall
-    energy levels of the entire swarm. The semantics
-    of the states are:
-
-    \begin{description}
-        \item[Searching] Robot is searching for food
-        \item[Grabbing] Robot attempts to grab a food item
-        \item[Depositing] Robot returns home with the food item
-        \item[Homing] Robot returns home without any food items
-        \item[Resting] Robot rests for some time
-    \end{description}
-
-    Then, there are some timeout conditions and probability
-    distributions over states after a transition is performed.
-
-    \begin{itemize}
-        \item $ T_s $ is the maximum amount time a robot can continue searching.
-        \item $ T_g $ is the maximum amount of time a robot can attempt
-            grabbing
-        \item $ T_d = \frac{T_h}{T_r} $ is the average time spent depositing
-        \item $ \gamma_f $ is the probability of finding a food item
-        \item $ \gamma_g $ is the probability of grabbing a food item
-        \item $ \gamma_l $ is the probability of losing sight of a food
-            item.
-    \end{itemize}
-
-    After including timeout conditions in the guards
-    of transitions, the model as introduced by Konur, Dixon, and
-    Fisher is actually a probabilistic timed automaton. However,
-    ignoring the guards on clock values and removing all self-transitions
-    with only clock guards on them and clock guards, we can consider this model
-    exactly as a discrete time Markov chain. Then, we can see
-    that a robot in the "Searching" state can probabilistically
-    transition into either the "Grabbing" state, or continue to
-    search for food items.
-
-    Side effects are then added. Total swarm energy levels are increased
-    with every unit of food deposited at home. Energy levels decrease
-    steadily when actions are taken by individual
-    robots. Now this model can then be used as a transition system in
-    which properties can be verified.
 \end{figure}
+
+The macroscopic representation of this robotic swarm
+shows that each robot is responsible for attempting
+to gather "food" in order to increase the overall
+energy levels of the entire swarm. The semantics
+of the states are:
+
+\begin{description}
+    \item[Searching] Robot is searching for food
+    \item[Grabbing] Robot attempts to grab a food item
+    \item[Depositing] Robot returns home with the food item
+    \item[Homing] Robot returns home without any food items
+    \item[Resting] Robot rests for some time
+\end{description}
+
+Then, there are some timeout conditions and probability
+distributions over states after a transition is performed.
+
+\begin{itemize}
+    \item $ T_s $ is the maximum amount time a robot can continue searching.
+    \item $ T_g $ is the maximum amount of time a robot can attempt
+        grabbing
+    \item $ T_d = \frac{T_h}{T_r} $ is the average time spent depositing
+    \item $ \gamma_f $ is the probability of finding a food item
+    \item $ \gamma_g $ is the probability of grabbing a food item
+    \item $ \gamma_l $ is the probability of losing sight of a food
+        item.
+\end{itemize}
+
+After including timeout conditions in the guards
+of transitions, the model as introduced by Konur, Dixon, and
+Fisher is actually a probabilistic timed automaton. However,
+ignoring the guards on clock values and removing all self-transitions
+with only clock guards on them and clock guards, we can consider this model
+exactly as a discrete time Markov chain. Then, we can see
+that a robot in the "Searching" state can probabilistically
+transition into either the "Grabbing" state, or continue to
+search for food items.
+
+Side effects are then added. Total swarm energy levels are increased
+with every unit of food deposited at home. Energy levels decrease
+steadily when actions are taken by individual
+robots. Now this model can then be used as a transition system in
+which properties can be verified.
 
 After constructing such a model, they implemented it in the PRISM model checker
 (PRISM) to verify actual properties in this probabilistic domain, such
@@ -198,9 +197,119 @@ PRISM supports an additional feature: if the $ \lambda $
 parameter is not specified in the property, then
 instead saying if the property is satisfied or not
 satisfied, PRISM will return the probability that
-the property is specified.
+the property is specified. For example, Konur,
+Dixon, and Fisher demonstrate the computation of
+the probability that "for an arbitrary number of robots
+and food finding probability, the swarm energy is
+equal to or greater than the initial energy from
+a time point $ t_A $." This property can be written
+in PCTL as:
 
-\section{Model Construction}\label{sec:model}
+\begin{align*}
+    P_{=?}((t < t_A) & \vee (E(t) \geq E(0)) \text{ U } t = t_{max} ) \\
+    \text{where } & t \text{ is the time variable} \\
+                  & t_A \text{ is the designated time point} \\
+                  & t_{max} \text{ is the simulation end time} \\
+                  & E(t) \text{ is the function returning the energy at time } t
+\end{align*}
+
+Thus by constructing a swarm robotics in this way,
+PCTL properties can be used to verify probabilistic
+properties.
+
+We observe that this foraging task, however, does
+not fully leverage the unique capabilities of
+a robot swarm. Specifically, the ability
+to aggregate and disaggregate. The foraging
+task essentially segregates all robots from
+each other, and assumes they can act
+independently. Furthermore, it does not
+consider the possibility for robots to
+cooperate with each other to increase
+the probability of successfully completing
+some task. Because real-world tasks will,
+more often than not, be more complex than
+the independent foraging task, we define
+another slightly more complex type of task
+along with real world examples of such tasks.
+
+\begin{defn}
+    A \emph{distributable probabilistic task}
+    (DPT) is a task (in a discrete time domain)
+    where:
+
+    \begin{itemize}
+        \item completion of the task by
+            the agents working on it
+            occurs probabilistically in
+            each time step
+        \item cooperation of agents working
+            on the same task increases the
+            completion probability
+        \item agents can work on multiple
+            tasks concurrently
+        \item the tasks may be of different
+            difficulty
+        \item after completion of a task,
+            the agents that were originally
+            working on that task may
+            redistribute themselves
+            among the remaining active tasks.
+    \end{itemize}
+
+    We also assume that the swarm robots
+    are homogeneous.
+\end{defn}
+
+Examples of real-world tasks that roughly
+fit this model are:
+
+\begin{itemize}
+    \item combat scenarios with multiple enemies.
+        Robots are designated targets. Multiple
+        robots attacking the same target
+        improves the chances of taking down
+        a target in any given round of combat.
+    \item cryptocurrency mining. A mining pool
+        can allocate computational resources to
+        try and compute correct hashes to
+        obtain a block of a particular
+        cryptocurrency.
+    \item DDOS attack planning. A botnet's
+        output capacity (measured in bits/second)
+        can be allocated among different servers
+        to try and overload them.
+    \item search and rescue. Several collapsed
+        buildings can be considered different
+        adversaries, where fully exploring
+        and identifying rescue targets occurs
+        probabilistically due to uncertainty
+        in the layout of a collapsed building.
+        Cooperative search and rescue efforts improves
+        the likelihood of completing search efforts
+        in a building.
+\end{itemize}
+
+For the remainder of this paper, we primarily
+refer to the combat example when talking about
+our model.
+
+For DPTs, task allocation becomes a problem.
+Specifically, given $ N $ enemies,
+with the ith enemy having some difficulty
+rating $ r_i $ (measuring how difficult it is
+to defeat that enemy), how should we allocate our robots
+in order to optimize for some desired effect
+(e.g. fastest victory, fewest casualties?)
+When considering the method by which we should allocate
+robots between enemies, it is important to realize
+that battles may conclude at different times, and
+thus it is important not only to specify how the
+swarm should \emph{initially} be allocated,
+but also how a group of robots should reallocate
+themselves when a battle is won.
+
+\section{Model Construction}\labl{sec:model}
 
 \section{Experiment Implementation}\label{sec:implementation}
 
@@ -218,7 +327,7 @@ the property is specified.
         Robotics and Autonomous Systems, 60:199–213,
         2012.
     \bibitem{konur10}
-        Savas Konur , Clare Dixon , Michael Fisher.
+        Savas Konur, Clare Dixon, Michael Fisher.
         Formal verification of probabilistic swarm behaviours,
         Proceedings of the 7th international conference on Swarm intelligence,
         September 08-10, 2010, Brussels, Belgium
