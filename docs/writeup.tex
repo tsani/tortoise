@@ -26,10 +26,10 @@
     in testing swarms for desired collective behavior,
     such as foraging, flocking, and navigation.
     Swarms performing such tasks face numerous challenges,
-    one of which is task allocation, which is concerned 
-    with optimal division of labour between individuals 
-    and groups of robots in a swarm.  Extant literature 
-    on robotic swarm task allocation focuses on the 
+    one of which is task allocation, which is concerned
+    with optimal division of labour between individuals
+    and groups of robots in a swarm.  Extant literature
+    on robotic swarm task allocation focuses on the
     aforementioned tasks. In this paper we introduce the
     notion of distributable probabilistic tasks,
     a class of tasks with particular traits, and
@@ -41,6 +41,15 @@
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
+
+A robot swarm is a collection of robots (that are often
+identical) that act cooperatively to perform a task.
+The scope of this paper does not cover the (daunting) challenges
+involved in the engineering of a robot swarm, nor does
+it take practical considerations such as communication between
+robots or hardware. In this paper we will take an abstract view
+of a robotic swarm and assume (perhaps recklessly) that
+these issues have all been taken care of.
 
 Formal verification, and in particular probabilistic model
 checking, has played a major role in the engineering of
@@ -94,6 +103,102 @@ and areas for future improvement.
 
 \section{Background and Motivation}\label{sec:background-motivation}
 
+The real-world results of actions are uncertain. Thus,
+probabilistic models are ideal for representing
+real-world swarm robotics systems.
+In particular, discrete time Markov chains (DTMCs)
+are used to extend the transition system representation
+of a robot swarm, to encode the effects of taking actions
+that produce probabilistic results.
+
+Liu, Winfield, and Sa represent a foraging swarm
+using a discrete time Markov chain. Figure \ref{fig:foraging}
+shows their construction using the macroscopic
+representation of a robot swarm.
+
+\begin{figure}
+    \caption{Konur, Dixon, and Fisher's foraging swarm representation}
+    \label{fig:foraging}
+    \centering
+    \includegraphics[width=\textwidth]{foraging.png}
+
+    The macroscopic representation of a robotic swarm
+    shows that each robot is responsible for attempting
+    to gather "food" in order to increase the overall
+    energy levels of the entire swarm. The semantics
+    of the states are:
+
+    \begin{description}
+        \item[Searching] Robot is searching for food
+        \item[Grabbing] Robot attempts to grab a food item
+        \item[Depositing] Robot returns home with the food item
+        \item[Homing] Robot returns home without any food items
+        \item[Resting] Robot rests for some time
+    \end{description}
+
+    Then, there are some timeout conditions and probability
+    distributions over states after a transition is performed.
+
+    \begin{itemize}
+        \item $ T_s $ is the maximum amount time a robot can continue searching.
+        \item $ T_g $ is the maximum amount of time a robot can attempt
+            grabbing
+        \item $ T_d = \frac{T_h}{T_r} $ is the average time spent depositing
+        \item $ \gamma_f $ is the probability of finding a food item
+        \item $ \gamma_g $ is the probability of grabbing a food item
+        \item $ \gamma_l $ is the probability of losing sight of a food
+            item.
+    \end{itemize}
+
+    After including timeout conditions in the guards
+    of transitions, the model as introduced by Konur, Dixon, and
+    Fisher is actually a probabilistic timed automaton. However,
+    ignoring the guards on clock values and removing all self-transitions
+    with only clock guards on them and clock guards, we can consider this model
+    exactly as a discrete time Markov chain. Then, we can see
+    that a robot in the "Searching" state can probabilistically
+    transition into either the "Grabbing" state, or continue to
+    search for food items.
+
+    Side effects are then added. Total swarm energy levels are increased
+    with every unit of food deposited at home. Energy levels decrease
+    steadily when actions are taken by individual
+    robots. Now this model can then be used as a transition system in
+    which properties can be verified.
+\end{figure}
+
+After constructing such a model, they implemented it in the PRISM model checker
+(PRISM) to verify actual properties in this probabilistic domain, such
+as the probability that the total energy supply of the swarm
+falls below some level.
+
+The properties are written in Probabilistic Computation Tree
+Logic (PCTL) \cite{pctl}, which extend Computation Tree Logic (CTL)
+with the following syntax and semantics.
+
+\begin{align*}
+    s \vDash & \mathcal{P}_{\sim\lambda}(\phi_1 \text{ U } \phi_2) \\
+    s \vDash & \mathcal{P}_{\sim\lambda}(\square \phi) \\
+    \text{where } & \sim \in \{ >, <, \leq, \geq \} \\
+                  & \phi_i \text{ is a CTL formula.} \\
+                  & \lambda \text{ is a probability.} \\
+\end{align*}
+
+The semantics of $ s \vDash \mathcal{P}_{\geq\lambda} ( \phi ) $ are
+"s satisfies $ \mathcal{P}_{\geq\lambda} ( \phi ) $ iff s
+satisfies $ \phi $ with probability greater than or equal
+to $ \lambda $".
+The $ >, <, \leq $ cases for $ \sim $ follow similarly.
+
+PCTL properties can be written directly into PRISM, and
+given a model that supports the property (i.e. there is
+no variable in the property that is not mentioned
+in the model) such a property can be verified.
+PRISM supports an additional feature: if the $ \lambda $
+parameter is not specified in the property, then
+instead saying if the property is satisfied or not
+satisfied, PRISM will return the probability that
+the property is specified.
 
 \section{Model Construction}\label{sec:model}
 
@@ -112,6 +217,16 @@ and areas for future improvement.
         probabilistic model checking.
         Robotics and Autonomous Systems, 60:199–213,
         2012.
+    \bibitem{konur10}
+        Savas Konur , Clare Dixon , Michael Fisher.
+        Formal verification of probabilistic swarm behaviours,
+        Proceedings of the 7th international conference on Swarm intelligence,
+        September 08-10, 2010, Brussels, Belgium
+    \bibitem{foraging}
+        Liu, W., Winfield, A., Sa, J.: Modelling Swarm Robotic Systems: A Study in Collective
+        Foraging. In: Proc. Towards Autonomous Robotic Systems (TAROS). pp. 25–32 (2007)
+    \bibitem{pctl}
+        Hansson, Hans, and Bengt Jonsson. "A logic for reasoning about time and reliability." Formal aspects of computing 6.5 (1994): 512-535.
 \end{thebibliography}
 
 \end{document}
