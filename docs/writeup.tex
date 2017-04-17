@@ -386,7 +386,8 @@ For the remainder of this paper, we primarily
 refer to the combat example when talking about
 our model.
 
-For DPTs, task allocation becomes a problem.
+For DPTs, task allocation becomes an interesting
+problem.
 Specifically, given $ N $ enemies,
 with the ith enemy having some difficulty
 rating $ r_i $ (measuring how difficult it is
@@ -399,7 +400,11 @@ that battles may conclude at different times, and
 thus it is important not only to specify how the
 swarm should \emph{initially} be allocated,
 but also how a group of robots should reallocate
-themselves when a battle is won.
+themselves when a battle is won. We treat this
+as an optimization problem and in section
+\ref{sec:model}, we construct a model that
+will allow us to produce an optimal allocation
+policy for enemies.
 
 \section{Model Construction}
 \label{sec:model}
@@ -412,6 +417,13 @@ themselves when a battle is won.
 
 \section{Conclusion}
 \label{sec:conclusion}
+
+% Issues: Not enough parameters to allow for all
+% kinds of allocations.
+% Can't do this optimization in a reasonable amount
+% of time/space with more than 4 enemies.
+% Improvements: Same enemies -> use counter instead
+% of explicit composition.
 
 \section{References}
 
