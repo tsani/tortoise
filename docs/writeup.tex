@@ -9,8 +9,7 @@
 \usepackage{csquotes}
 \usepackage[margin=3.0cm]{geometry}
 \usepackage{hyperref}
-\usetikzlibrary{automata}
-\usetikzlibrary{graphs}
+\usetikzlibrary{automata, graphs, arrows}
 
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}
@@ -132,23 +131,111 @@ improvement.
 \section{Background and Motivation}
 \label{sec:background-motivation}
 
-The real-world results of actions are uncertain. Thus,
-probabilistic models are ideal for representing
-real-world swarm robotics systems.
-In particular, discrete time Markov chains (DTMCs)
-are used to extend the transition system representation
-of a robot swarm, to encode the effects of taking actions
-that produce probabilistic results.
+The results of actions in the real world can be uncertain.
+Specifically in a robot swarm, the actions of a particular robot might fail.
+Probabilistic models exist to handle this type of situation, and are hence a
+tool of choice for modeling robotic swarms.
+A transition system for a robot swarm can be augmented with probabilities,
+giving rise to a discrete-time Markov chain (DTMC).
 
-Liu, Winfield, and Sa represent a foraging swarm
-using a discrete time Markov chain. Figure \ref{fig:foraging}
-shows their construction using the macroscopic
-representation of a robot swarm.
+Liu, Winfield, and Sa represent a foraging swarm following the macroscopic
+approach using a discrete time Markov chain.
+Figure \ref{fig:foraging} shows their construction.
 
-\begin{figure}
-    \caption{Konur, Dixon, and Fisher's foraging swarm representation}
+\begin{figure}[ht]
     \label{fig:foraging}
-    \includegraphics[width=\textwidth]{foraging.png}
+    \begin{center}
+        \begin{tikzpicture}[
+                ->,
+                > =stealth',
+                draw=black,
+                semithick,
+                shorten >=1pt,
+            ]
+            \matrix[row sep=2cm, column sep=2cm]{
+                &
+                \node (G) {Grabbing} ; &
+                \\
+                \node (S) {Searching} ; &
+                \node (H) {Homing} ; &
+                \node (D) {Depositing} ; \\
+                &
+                \node (R) {Resting} ; &
+                \\
+            } ;
+
+            \graph[use existing nodes]{
+                S ->[
+                    edge label={$1 - \gamma_f$, $t < T_s$},
+                    loop left,
+                    looseness=4
+                ]
+                S ->[
+                    edge label={$\gamma_f$, $t < T_s$},
+                    sloped,
+                ]
+                G ->[
+                    edge label={$1 - \gamma_g - \gamma_l$, $t < T_g$},
+                    loop above,
+                ]
+                G ->[
+                    edge label={$\gamma_l$, $t < T_g$},
+                    bend right=45,
+                    swap,
+                    sloped,
+                ]
+                S
+                ;
+
+                G ->[
+                    edge label={$\gamma_g$, $t < T_g$},
+                    sloped,
+                ]
+                D ->[
+                    edge label={$t < T_d$},
+                    loop right,
+                    looseness=4,
+                ]
+                D ->[
+                    edge label={$t \geq T_d$},
+                    sloped,
+                ]
+                R ->[
+                    edge label={$t < T_r$},
+                    loop below,
+                ]
+                R ->[
+                    edge label={$t \geq T_r$},
+                    sloped,
+                ]
+                S ->[
+                    edge label={$t \geq T_s$},
+                ]
+                H ->[
+                    edge label={$t < T_h$},
+                    loop right,
+                    looseness=4,
+                ]
+                H ->[
+                    edge label={$t \geq T_h$},
+                ]
+                R
+                ;
+
+                G ->[
+                    edge label={$t \geq T_g$},
+                ]
+                H
+                ;
+            } ;
+        \end{tikzpicture}
+    \end{center}
+    \caption{
+        Konur, Dixon, and Fisher's foraging swarm representation.
+        This model is in fact a probabilistic timed automaton (PTA), but
+        dropping all clock guards (of the form $t < T$ or $t \leq T$) yields a
+        DTMC.
+    }
 \end{figure}
 
 The macroscopic representation of this robotic swarm
