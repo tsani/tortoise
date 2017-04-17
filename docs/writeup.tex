@@ -216,7 +216,7 @@ representation of a robot swarm.
 
 The macroscopic representation of this robotic swarm
 shows that each robot is responsible for attempting
-to gather "food" in order to increase the overall
+to gather ``food'' in order to increase the overall
 energy levels of the entire swarm. The semantics
 of the states are:
 
@@ -248,8 +248,8 @@ Fisher is actually a probabilistic timed automaton. However,
 ignoring the guards on clock values and removing all self-transitions
 with only clock guards on them and clock guards, we can consider this model
 exactly as a discrete time Markov chain. Then, we can see
-that a robot in the "Searching" state can probabilistically
-transition into either the "Grabbing" state, or continue to
+that a robot in the ``Searching'' state can probabilistically
+transition into either the ``Grabbing'' state, or continue to
 search for food items.
 
 Side effects are then added. Total swarm energy levels are increased
@@ -276,9 +276,9 @@ with the following syntax and semantics.
 \end{align*}
 
 The semantics of $ s \vDash \mathcal{P}_{\geq\lambda} ( \phi ) $ are
-"s satisfies $ \mathcal{P}_{\geq\lambda} ( \phi ) $ iff s
+``s satisfies $ \mathcal{P}_{\geq\lambda} ( \phi ) $ iff s
 satisfies $ \phi $ with probability greater than or equal
-to $ \lambda $".
+to $ \lambda $''.
 The $ >, <, \leq $ cases for $ \sim $ follow similarly.
 
 PCTL properties can be written directly into PRISM, and
@@ -291,10 +291,10 @@ instead saying if the property is satisfied or not
 satisfied, PRISM will return the probability that
 the property is specified. For example, Konur,
 Dixon, and Fisher demonstrate the computation of
-the probability that "for an arbitrary number of robots
+the probability that ``for an arbitrary number of robots
 and food finding probability, the swarm energy is
 equal to or greater than the initial energy from
-a time point $ t_A $." This property can be written
+a time point $ t_A $.'' This property can be written
 in PCTL as:
 
 \begin{align*}
