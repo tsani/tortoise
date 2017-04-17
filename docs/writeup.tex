@@ -19,89 +19,181 @@
 \maketitle
 
 \begin{abstract}
-    Probabilistic model checking is employed
-    in swarm robotics to verify
-    properties of swarm behavior in the context of
-    tasks. Several canonical tasks are often used
-    in testing swarms for desired collective behavior,
-    such as foraging, flocking, and navigation.
-    Swarms performing such tasks face numerous challenges,
-    one of which is task allocation, which is concerned
-    with optimal division of labour between individuals
-    and groups of robots in a swarm.  Extant literature
-    on robotic swarm task allocation focuses on the
-    aforementioned tasks. In this paper we introduce the
-    notion of distributable probabilistic tasks,
-    a class of tasks with particular traits, and
-    propose a probabilistic model checking framework
-    through which optimal task allocation proportions
-    can be derived. We then conduct experiments using our
-    framework in the context of several combat scenarios,
-    and present experimental results.
+    % > Probabilistic model checking is employed in swarm robotics to verify
+    % > properties of swarm behavior in the context of tasks.
+    % TODO "in the context of tasks" sounds super vague
+    %
+    Probabilistic model checked is used to verify properties of a robotic swarm
+    performing a certain task.
+    %
+    Several canonical tasks are often used in testing swarms for desired
+    collective behavior, such as foraging, flocking, and navigation.
+    % TODO I don't like this sentence. I'm not sure how best to rephrase it.
+    %
+    % > Swarms performing such tasks face numerous challenges, one of which is
+    % > task allocation, which is concerned with optimal division of labour
+    % > between individuals and groups of robots in a swarm.
+    %
+    The problem of robotic swarm task allocation arises when a swarm is
+    presented with multiple tasks to complete concurrently: in what proportions
+    must a swarm disaggregate and recombine to most efficiently complete all
+    tasks?
+    %
+    Extant literature on robotic swarm task allocation focusses on the
+    aforementioned types of tasks.
+    %
+    In this paper we introduce the notion of distributable probabilistic tasks,
+    % > a class of tasks with particular traits,
+    % This sounds very very vague, and can probably just be omitted
+    and propose a probabilistic model checking framework through which optimal
+    allocation proportions can be derived.
+    %
+    % > We then conduct experiments using our
+    % > framework in the context of several combat scenarios,
+    % > and present experimental results.
+    %
+    % TODO Not sure this should be said in the abstract.
 \end{abstract}
 
-\section{Introduction}\label{sec:intro}
+\section{Introduction}
+\label{sec:intro}
 
-A robot swarm is a collection of robots (that are often
-identical) that act cooperatively to perform a task.
-The scope of this paper does not cover the (daunting) challenges
-involved in the engineering of a robot swarm, nor does
-it take practical considerations such as communication between
-robots or hardware. In this paper we will take an abstract view
-of a robotic swarm and assume (perhaps recklessly) that
-these issues have all been taken care of.
+A robot swarm is a group of robots acting cooperatively to perform a task.
+Different types of swarms have been considered in the literature.
+Most often, one considers homogeneous swarms, in which the members have
+identical capabilities.
+Swarm robotics is a notorious field due to issues of \emph{scale}.
+It is not necessarily clear what properties a swarm will have when one knows
+only the properties of its members.
+Contrariwise, knowing only the properties of the swarm in aggregate, it can be
+difficult to see what properties the members ought to have.
+Hence in the design of robot swarms, there are two major approaches:
+%
+\begin{enumerate}
+    \item
+        the \emph{macroscopic} approach focusses on the desired properties of
+        the swarm as a whole, and attempts to determine how to build suitable
+        member robots;
+        % cite example of macroscopic approach
+        %
+    \item
+        the \emph{microscopic} approach starts with the design of individual
+        robots, and attempts to predict what properties emerge from that
+        construction.
+        % cite example of microscopic approach
+        %
+\end{enumerate}
 
-Formal verification, and in particular probabilistic model
-checking, has played a major role in the engineering of
-correct swarm and individual robot behavior. % Citation needed.
+In recent years, robot swarm engineering has evolved from a rather ad hoc
+endeavor to a more principled science.
+ASDF 20XX proposes a novel framework for designing robot swarms: their
+methodology is driven by model checking.
+% TODO cite their paper
+As the outcomes of a robot's actions are uncertain, the techniques of
+probabilistic model checking are more appropriate.
+%
+% ... "and has played a major role in the engineering of correct swarm
+% behaviour." ?
+% I liked this mention from the original, but we will need a citation.
+% TODO decide whether to include this mention
+%
+% > Formal verification, and in particular probabilistic model
+% > checking, has played a major role in the engineering of
+% > correct swarm and individual robot behavior. % Citation needed.
+% >
+% > There are generally two approaches for modeling a swarm robotics
+% > system: the microscopic and macroscopic view.
+% >
+% > In the microscopic view, the behavior of an individual robot
+% > is first modeled with a transition system. Then,
+% > a model corresponding to the behavior of the swarm is
+% > generated by creating a composed transition system
+% > by composing many of the individual transition systems
+% > together. This representation is useful for verifying
+% > properties of individual robots, but is not
+% > very useful for the verification of properties of the
+% > entire swarm when the population of robots in the swarm
+% > is high, as the state space grows exponentially in
+% > the number of composed transition systems.
+%
+% I already discuss macro vs micro above, so now I just focus on the
+% application of model-checking to micro:
 
-There are generally two approaches for modeling a swarm robotics
-system: the microscopic and macroscopic view.
+In applying the principles of model checking to the microscopic approach to
+swarm design, one models each member of the swarm as an independent transition
+system.
+Communication and coordination protocols are modelled as controllers.
+The swarm's behaviour can then be studied by examining the properties of the
+composed transition system.
+As swarms of greater size are modelled in this way, the composition of their
+transition systems becomes considerably larger.
+% TODO cite / explain just how much bigger?
+Due to this state space explosion, microscopic model checking is currently
+infeasible for swarms of any appreciable size.
 
-In the microscopic view, the behavior of an individual robot
-is first modeled with a transition system. Then,
-a model corresponding to the behavior of the swarm is
-generated by creating a composed transition system
-by composing many of the individual transition systems
-together. This representation is useful for verifying
-properties of individual robots, but is not
-very useful for the verification of properties of the
-entire swarm when the population of robots in the swarm
-is high, as the state space grows exponentially in
-the number of composed transition systems.
+% > In the macroscopic view (assuming that the robots
+% > in the swarm are identical in design and can be
+% > modeled with the same transition system), a single
+% > transition system is used to represent the entire
+% > swarm. The transition system is identical to the
+% > transition system that models individual behavior of
+% > a single robot, except where each state is
+% > annotated with a variable that describes the
+% > number of robots in the swarm that are currently
+% > in that state. \cite{konur12}
+%
+In contrast, the macroscopic approach does not track the internal state of each
+robot directly as in the microscopic approach.
+Assuming a homogeneous robots, the macroscopic approach uses a single
+transition system to model the swarm.
+This system is obtained by considering the different states a single robot can
+be in, and augmenting these states with a count of how many robots of the swarm
+are in that state.
+The transition rules between states in the augmented system must
+govern what \emph{proportion} of robots change state without having access to
+the internal details of the particular robots.
 
-In the macroscopic view (assuming that the robots
-in the swarm are identical in design and can be
-modeled with the same transition system), a single
-transition system is used to represent the entire
-swarm. The transition system is identical to the
-transition system that models individual behavior of
-a single robot, except where each state is
-annotated with a variable that describes the
-number of robots in the swarm that are currently
-in that state. \cite{konur12}
+% > By representing a swarm robotics system this way,
+% > we can describe a far larger swarm,
+% > which makes the properties that can be verified
+% > much more interesting. Thus, this is the representation
+% > of a robot swarm that we will use for this paper.
+%
+In this paper, we follow the macroscopic approach.
+By representing the robotic swarm in this way, we can describe and analyze a
+much larger system than otherwise possible.
+This makes it possible to verify more interesting properties.
+%
+The scope of this paper does not include the (daunting) challenges involved in
+the engineering of a robot swarm, nor do we take into account many practical
+considerations such as the reliability of communication between robots or
+hardware.
+We take an abstract view of a robotic swarm and assume (perhaps recklessly)
+that these issues are solved.
 
-By representing a swarm robotics system this way,
-we can describe a far larger swarm,
-which makes the properties that can be verified
-much more interesting. Thus, this is the representation
-of a robot swarm that we will use for this paper.
-
+This paper is structured as follows.
+%
 In section \ref{sec:background-motivation} we provide an overview of the
-existing literature on probabilistic model checking and
-task allocation in swarm robotics. We then introduce
-the problem domain that our framework tackles,
-along with our definition of a distributable probabilistic
-task. In section \ref{sec:model} we describe how our framework
-is constructed using a concrete combat example. In section
-\ref{sec:implementation} we describe the implementation of
-our framework, along with the specifications of how our
-experiments were implemented. In section \ref{sec:results}
-we present our experimental results using our framework.
-In section \ref{sec:conclusion} we add some concluding remarks
-and areas for future improvement.
+existing literature on probabilistic model checking and on task allocation in
+swarm robotics.
+We then introduce the problem domain that our framework tackles, along with
+the notion of a distributable probabilistic task.
+%
+In section \ref{sec:model} we describe how our framework is constructed using a
+concrete combat example.
+%
+In section \ref{sec:implementation} we describe the implementation of our
+framework, along with the specifications of how our experiments were
+implemented.
+%
+In section \ref{sec:results} we present our experimental results and discuss
+their relevance.
+%
+We conclude in section \ref{sec:conclusion} and consider avenues for future
+improvement.
 
-\section{Background and Motivation}\label{sec:background-motivation}
+\section{Background and Motivation}
+\label{sec:background-motivation}
 
 The real-world results of actions are uncertain. Thus,
 probabilistic models are ideal for representing
