@@ -8,6 +8,7 @@
 \usepackage{amsthm,amsmath,amssymb}
 \usepackage{csquotes}
 \usepackage[margin=3.0cm]{geometry}
+\usepackage{hyperref}
 \usetikzlibrary{automata}
 \usetikzlibrary{graphs}
 
@@ -348,6 +349,66 @@ policy for enemies.
 \section{Experiment Implementation}
 \label{sec:implementation}
 
+To show that models of distributable probabilistic tasks can be realistically
+analyzed on stock hardware, we wish to verify a number of properties across a
+range of DPTs.
+Each DPT that we analyze is a concrete instance of the general combat model
+outlined in the previous section.
+To verify the properties of interest, we must implement each DPT in the PRISM
+language.
+This means choosing how many ``battles'' will be fought by the swarm and
+writing one PRISM module per battle.
+(In PRISM, a module corresponds to an individual transition system.)
+However, the structure of each transition system is essentially the same, so
+writing each of these modules by hand is quite tedious.
+
+To alleviate this, we wrote a PRISM code generator.
+This software allows us to express, in an embedded domain-specific language, a
+PRISM model.
+We then wrote a small front-end for the code generator in which one specifies
+how many tasks the swarm must complete.
+The output is a PRISM model with the boilerplate code of all the necessary
+PRISM modules filled in for the analysis of the corresponding DPT setup.
+
+Next, we need to vary parameters such as the probability of a robot dying or
+the efficiency of individual robots to see what effect this has the overall
+outcome of the battles.
+%
+At first, one might think of using PRISM's built-in parametric model checking
+facilities.
+%
+In doing so, the practitioner leaves one or more variables in a PRISM model
+undefined.
+%
+These act as parameters which PRISM can then instantiate with concrete values
+following a specification.
+%
+However, PRISM does not make efficient use of multicore machines:
+models are checked serially.
+This makes model checking across a wide range of parameters prohibitively slow.
+
+Rather than use PRISM's built-in parametric model checking facilities, we
+extended the code generator to support the specification of \emph{all} the
+relevant properties for DPTs.
+%
+In particular, our frontend supports specifying the number of robots in the
+swarm, the number of enemies and their difficulty ratings, the efficiency
+rating of the robots, and the lethality rating of battle.
+%
+The output is a concrete PRISM model that can be checked directly.
+%
+Verifying multiple models in parallel can be done easily with GNU Parallel
+\cite{parallel}.
+
+Still, verifying a very large number of models using a single multicore machine
+would take quite a long time.
+For our purposes, we used three Amazon Web Services Elastic Cloud Compute
+servers, each with 16 CPU cores and 30GB of main memory.
+Engineers interested in the details of this cloud setup are invited to see the
+code online\footnotemark.
+
+\footnotetext{\url{https://github.com/tsani/tortoise}}
+
 \section{Experimental Results}
 \label{sec:results}
 
@@ -389,6 +450,14 @@ policy for enemies.
         Proceedings of the 11th International Conference on
         Autonomous Agents and Multiagent Systems.
         AAMAS 2012.
+    \bibitem{parallel}
+        Tange O.
+        ``GNU Parallel - The Command-Line Power Tool'',
+        ;login: The USENIX Magazine,
+        volume 36, number 1, February 2011,
+        Frederiksberg, Denmark,
+        pp. 42-47,
+        \url{http://www.gnu.org/s/parallel}
 \end{thebibliography}
 
 \end{document}
