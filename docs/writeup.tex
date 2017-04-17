@@ -19,6 +19,8 @@
 \newcommand{\until}{\mathbin{\mathtt{U}}}
 \newcommand{\X}{\bigcirc}
 
+\newcommand{\abs}[1]{\left\vert{#1}\right\vert}
+
 \begin{document}
 
 \maketitle
@@ -461,6 +463,56 @@ policy for enemies.
 
 \section{Model Construction}
 \label{sec:model}
+
+Conceptually, we represent a combat scenario in the following way.
+
+We are given $ N $ robots and the set of enemies 
+$ M \subset \mathbb{N} \times \mathbb{N} $,
+where the first element of the tuple is the unique identifier 
+of the enemy, and the second element is the difficulty level
+of the enemy. These $ N $ robots may be distributed
+in any way between all $ \abs{M} $ enemies.
+
+We assume that rounds of combat occur concurrently in discrete time,
+and that in any given round of combat against a
+particular enemy, that enemy may be defeated
+with some probability.
+
+Furthermore, if more robots are fighting
+the same enemy, then the probability of
+defeating that enemy is higher.
+
+Finally, after an enemy is defeated, all of
+the robots that were originally fighting
+that enemy can redistribute themselves
+over the remaining battles.
+
+\begin{figure}
+    \caption{Transition system representation of a single battle}
+    \label{tikz:battle}
+    \begin{tikzpicture}
+        \matrix[row sep=1cm,column sep=1cm]{
+            \node[draw=black,circle] (s0) {$s_0$} ; \&
+            \node[draw=black,circle] (s1) {$s_1$} ; \&
+            \node[draw=black,circle] (s3) {$s_3$} ; \&
+            \node[draw=black,circle] (s4) {$s_4$} ; \&
+            \node[draw=black,circle] (s5) {$s_5$} ; \\
+            \&
+            \node[draw=black,circle] (s2) {$s_2$} ; \\
+        } ;
+
+        \graph[use existing nodes] {
+            s0 -> s1 ;
+            s1 ->[edge label={attack, $1 - p$}] s2 ;
+            s1 ->[edge label={attack, $ p $}] s3 ;
+            s2 -> s1;
+            s3 -> s4;
+            s4 ->[edge label={attack}] s4;
+            s4 ->[edge label={done}] s5;
+        } ;
+
+    \end{tikzpicture}
+\end{figure}
 
 \section{Experiment Implementation}
 \label{sec:implementation}
