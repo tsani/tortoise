@@ -123,25 +123,28 @@ def main():
     # Sort by exponent
     data = data.sort_values(by="exponent")
 
-    props = [# "P=? [ F some_battle_won ]",
+    props = [("P=? [ F some_battle_won ]", "Some battle is won"),
             # "P=? [ F N=0 ]",
             # "P=? [ F s_1=3 ]",
-            # "P=? [ F s_1=4 ]",
-            "P=? [ F s_1=4&N>=0.1*initialN ]",
-            "P=? [ F s_1=4&N>=0.2*initialN ]",
-            "P=? [ F s_1=4&N>=0.3*initialN ]",
-            "P=? [ F s_1=4&N>=0.4*initialN ]",
-            "P=? [ F s_1=4&N>=0.5*initialN ]",
-            "P=? [ F s_1=4&N>=0.6*initialN ]",
-            "P=? [ F s_1=4&N>=0.7*initialN ]",
-            "P=? [ F s_1=4&N>=0.8*initialN ]",
-            "P=? [ F s_1=4&N>=0.9*initialN ]",
+            ("P=? [ F s_1=4 ]", "All battles are won"),
+            # "P=? [ F s_1=4&N>=0.1*initialN ]",
+            # "P=? [ F s_1=4&N>=0.2*initialN ]",
+            # "P=? [ F s_1=4&N>=0.3*initialN ]",
+            # "P=? [ F s_1=4&N>=0.4*initialN ]",
+            # "P=? [ F s_1=4&N>=0.5*initialN ]",
+            # "P=? [ F s_1=4&N>=0.6*initialN ]",
+            # "P=? [ F s_1=4&N>=0.7*initialN ]",
+            # "P=? [ F s_1=4&N>=0.8*initialN ]",
+            # "P=? [ F s_1=4&N>=0.9*initialN ]",
             # "P=? [ G (s_1=1=>(X s_1=2)) ]"
             ]
-    for p in props:
-        plt.plot(data.exponent, data[p], label=p)
+    for (p, name) in props:
+        plt.plot(data.exponent, data[p], label=name)
+    plt.xlabel("Exponent")
+    plt.ylabel("Probability")
     plt.legend()
-    plt.show()
+    # plt.show()
+    plt.savefig('fig.png')
 
     print(data["P=? [ F N=0 ]"])
 
@@ -166,7 +169,7 @@ def main():
                 np.repeat(0.1, size),
                 rtol = 0.0001)
             ]
-    
+
     eff_leth_vary = eff_leth_vary.sort_values(by="num_bots")
 
     survival_indices = [
@@ -212,7 +215,7 @@ def main():
     # numbots
     # enemies 25, 200,
     # efficiency 1.15
-    # 
+    #
     # varying exponent, lethality
     print(set(data.efficiency))
     size = len(data.efficiency)
