@@ -111,13 +111,14 @@ def get_2d_data(param_name, prop, pattern):
     return sorted(tups, key=lambda t: t[0])
 
 def load_data():
-    d = pd.read_csv("results-4.csv")
+    d = pd.read_csv("results.csv")
     return d
 
 def main():
     data = load_data()
     print(data)
 
+    '''
     # Plot prob of eventual win against exponent
 
     # Sort by exponent
@@ -147,6 +148,7 @@ def main():
     plt.savefig('fig.png')
 
     print(data["P=? [ F N=0 ]"])
+    '''
 
     '''
     # DataFrame with
@@ -210,72 +212,79 @@ def main():
     '''
 
 
-    '''
     # DataFrame with
     # numbots
     # enemies 25, 200,
     # efficiency 1.15
     #
     # varying exponent, lethality
-    print(set(data.efficiency))
     size = len(data.efficiency)
-    exp_leth_var = data[(data.num_bots == 20) &
+    print(data.exponent)
+    exp_leth_var = data[
             (data.num_enemies == 2) &
             isclose(data.enemy_level_1, np.repeat(25, size)) &
             isclose(data.enemy_level_2, np.repeat(200, size)) &
+            isclose(data.exponent,
+                np.repeat(2.85, size),
+                rtol = 0.0001) &
             isclose(data.efficiency,
-                np.repeat(1.35, size),
+                np.repeat(1.85, size),
                 rtol = 0.0001)
             ]
 
     exp_leth_size = len(exp_leth_var)
-    print(len(exp_leth_var))
 
     # Probability of eventual victory
-    X = np.array(sorted(list(exp_leth_var.exponent)))
+    X = np.array(sorted(list(exp_leth_var.num_bots)))
     Y = np.array(sorted(list(exp_leth_var.lethality)))
     X, Y = np.meshgrid(X, Y)
 
-    Z = []
-
-    i = 1
-    total = len(np.ravel(X))
-    for x, y in zip(np.ravel(X), np.ravel(Y)):
-        i += 1
-        z = exp_leth_var[
-                isclose(exp_leth_var.exponent,
-                    np.repeat(x,
-                        exp_leth_size,
-                        ),
-                    rtol = 0.001
-                    ) &
-                isclose(exp_leth_var.lethality,
-                    np.repeat(y,
-                        exp_leth_size
-                        ),
-                    rtol = 0.001
-                    )
-                ]["P=? [ F some_battle_won ]"].values[0]
-        Z.append(z)
-
-    print(Z)
-
-    Z = np.array(Z).reshape(X.shape)
-
-    print("print shape")
-    print(Z)
-    print("printed shape")
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(X,Y,Z)
-    plt.title("Probability of winning at least one battle")
-    plt.xlabel("a-Parameter")
+
+    Z = []
+    survive_probs = [
+            "P=? [ F s_1=4&N>=0.1*initialN ]",
+            # "P=? [ F s_1=4&N>=0.2*initialN ]",
+            # "P=? [ F s_1=4&N>=0.3*initialN ]",
+            # "P=? [ F s_1=4&N>=0.4*initialN ]",
+            # "P=? [ F s_1=4&N>=0.5*initialN ]",
+            # "P=? [ F s_1=4&N>=0.6*initialN ]",
+            # "P=? [ F s_1=4&N>=0.7*initialN ]",
+            # "P=? [ F s_1=4&N>=0.8*initialN ]",
+            "P=? [ F s_1=4&N>=0.9*initialN ]"
+            ]
+
+    total = len(np.ravel(X))
+    for p in survive_probs:
+        Z = []
+        for x, y in zip(np.ravel(X), np.ravel(Y)):
+            z = exp_leth_var[
+                    isclose(exp_leth_var.num_bots,
+                        np.repeat(x,
+                            exp_leth_size,
+                            ),
+                        rtol = 0.001
+                        ) &
+                    isclose(exp_leth_var.lethality,
+                        np.repeat(y,
+                            exp_leth_size
+                            ),
+                        rtol = 0.001
+                        )
+                    ][p].values[0]
+            Z.append(z)
+
+        Z = np.array(Z).reshape(X.shape)
+        ax.plot_surface(X,Y,Z, label=p)
+        print("done")
+
+    plt.title("Survival Probabilities")
+    plt.xlabel("Number of bots")
     plt.ylabel("Lethality")
-    ax.set_zlabel("Probability of winning at least one battle")
+    ax.set_zlabel("Probability that portion survives")
 
     plt.show()
-    '''
 
     # Yay pandas dataframe
 
