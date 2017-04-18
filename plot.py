@@ -111,12 +111,39 @@ def get_2d_data(param_name, prop, pattern):
     return sorted(tups, key=lambda t: t[0])
 
 def load_data():
-    d = pd.read_csv("results.csv")
+    d = pd.read_csv("results-4.csv")
     return d
 
 def main():
     data = load_data()
     print(data)
+
+    # Plot prob of eventual win against exponent
+
+    # Sort by exponent
+    data = data.sort_values(by="exponent")
+
+    props = [# "P=? [ F some_battle_won ]",
+            # "P=? [ F N=0 ]",
+            # "P=? [ F s_1=3 ]",
+            # "P=? [ F s_1=4 ]",
+            "P=? [ F s_1=4&N>=0.1*initialN ]",
+            "P=? [ F s_1=4&N>=0.2*initialN ]",
+            "P=? [ F s_1=4&N>=0.3*initialN ]",
+            "P=? [ F s_1=4&N>=0.4*initialN ]",
+            "P=? [ F s_1=4&N>=0.5*initialN ]",
+            "P=? [ F s_1=4&N>=0.6*initialN ]",
+            "P=? [ F s_1=4&N>=0.7*initialN ]",
+            "P=? [ F s_1=4&N>=0.8*initialN ]",
+            "P=? [ F s_1=4&N>=0.9*initialN ]",
+            # "P=? [ G (s_1=1=>(X s_1=2)) ]"
+            ]
+    for p in props:
+        plt.plot(data.exponent, data[p], label=p)
+    plt.legend()
+    plt.show()
+
+    print(data["P=? [ F N=0 ]"])
 
     '''
     # DataFrame with
@@ -179,6 +206,8 @@ def main():
     plt.show()
     '''
 
+
+    '''
     # DataFrame with
     # numbots
     # enemies 25, 200,
@@ -243,7 +272,6 @@ def main():
     ax.set_zlabel("Probability of winning at least one battle")
 
     plt.show()
-    '''
     '''
 
     # Yay pandas dataframe
