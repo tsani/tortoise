@@ -150,9 +150,11 @@ tool of choice for modeling robotic swarms.
 A transition system for a robot swarm can be augmented with probabilities,
 giving rise to a discrete-time Markov chain (DTMC).
 
-Liu, Winfield, and Sa represent a foraging swarm following the macroscopic
-approach using a discrete time Markov chain.
-Figure \ref{fig:foraging} shows their construction.
+Liu, Winfield, and Sa (2007) represent a foraging swarm following the
+macroscopic approach using a discrete time Markov chain\cite{foraging}.
+Konur, Dixon, and Fisher (2012) extend this idea\cite{konur12}, and model the
+swarm in PRISM\cite{prism}.
+Figure \ref{fig:foraging} shows their model.
 
 \begin{figure}
     \begin{center}
@@ -421,7 +423,7 @@ talking about our model.
 
 For DPTs, task allocation becomes an interesting problem.
 %
-Specifically, given $N$ enemies, with the $i$\th enemy having a difficulty
+Specifically, given $N$ enemies, with the $i$\th{} enemy having a difficulty
 rating $d_i$, how should we allocate our robots in order to optimize for some
 desired effect, e.g. probability of victory, surviving number of robots, etc.?
 %
@@ -500,7 +502,7 @@ over the remaining battles.
     %
     In the composed transition systems, all labeled actions
     must be performed synchronously between all
-    transition systems. These actions are "attack", "done", and "init".
+    transition systems. These actions are ``attack'', ``done'', and ``init''.
     %
     Due to our assumption that rounds of combat
     occur in discrete time, and are concurrent,
@@ -513,12 +515,12 @@ over the remaining battles.
         \item $p$ is the probability of defeating the current
             enemy in a round of combat.
         \item $s_0$ is the state in which all battles start.
-            The "init" action synchronizes across all
+            The ``init'' action synchronizes across all
             battles, so the initial
             distribution of robots occurs at the same time
             across all battles.
-        \item $s_1$ is the "ready" state in which
-            attacking can occur. When the "attack" action
+        \item $s_1$ is the ``ready'' state in which
+            attacking can occur. When the ``attack'' action
             occurs, the battle can transition into
             $s_2$ with probability $p_i$, or
             $s_3$ with probability $1 - p_i$.
@@ -538,7 +540,7 @@ over the remaining battles.
             conclusion of a single battle.
         \item $s_5$ is the state representing the
             conclusion of all battles. This state
-            can only be entered with the "done" action,
+            can only be entered with the ``done'' action,
             which is synchronized across all battles.
     \end{itemize}
 
@@ -558,19 +560,21 @@ $i$.
 In principle, any function that produces a probability can be used, but in our
 implementation we use the cumulative distribution function
 $f(x) = 1 - e^{-\lambda x}$ of an exponential random variable for the
-probability of a successful attack.
+probability of an unsuccessful attack.
 %
-Thus, we use $e^{-\lambda x}$ as the probability of a failed attack.
+Thus, we use $e^{-\lambda x}$ as the probability of a successful attack.
 %
 Intuitively, the probability of failed attack should increase as the difficulty
 level of enemy increases.
 This is reflected as $x$ is the difficulty level
 of the enemy.
+%
 Then, we would like for efficiency of robots and the current number of robots
 to affect the probability of a failed attack.
 Again, intuitively, the probability of a failed attack decreases both as the
-number of robots attacking the enemy ($n_i$) and the efficiency of robots ($c$)
+number of robots $n_i$ attacking the enemy and the efficiency $c$ of robots
 increase.
+%
 We encode this in the lambda parameter of the exponential c.d.f., by setting
 $\lambda = \frac{1}{c n_i}$.
 This probability then updates whenever the total number of robots changes
@@ -625,25 +629,27 @@ In our implementation, we use the scaling function $g(x) = x^a$,
 where $a$ is our free variable.
 However, realistically any non-negative function can be used.
 
-In order to more accurately capture a battle, we include
-the notion of casualties: if a battle is not won in a round
-of combat, then the robot swarm will suffer
-a single casualty with some probability $p_c$.
-This parameter is also a parameter of the model
-that must be specified, like the efficiency of the robots.
+In order to more accurately capture a battle, we include the notion of
+casualties:
+if a battle is not won in a round of combat, then the gruop of robots engaged
+in that battle will suffer a single casualty with some probability $p_c$.
+We call this the \emph{lethality rate} of battle.
 
 An example workflow would follow these steps:
-
+%
 \begin{enumerate}
     \item
         Select the properties whose probabilities you would like to maximize
+        %
     \item
         Construct the model by specifying the set of enemies, number and
         efficiency of robots, scaling function, and probability of casualty.
+        %
     \item
         Calculate the probabilities of the desired properties while iterating
         over values of parameters for the scaling function.
         Stop when a local maximum for the properties is reached.
+        %
 \end{enumerate}
 
 \section{Experiment Implementation}
@@ -861,10 +867,16 @@ space requirements.
         Formal aspects of computing 6.5 (1994): 512-535.
     \bibitem{brambilla12}
         Brambilla M., Carlo P., Birattari M., and Dorigo M.
-        "Property-driven design for swarm robotics".
+        ``Property-driven design for swarm robotics''.
         Proceedings of the 11th International Conference on
         Autonomous Agents and Multiagent Systems.
         AAMAS 2012.
+    \bibitem{prism}
+        Marta Kwiatkowska, Gethin Norman and David Parker.
+        PRISM 4.0: Verification of Probabilistic Real-time Systems.
+        In Proc. 23rd International Conference on Computer Aided Verification
+        (CAV’11),
+        volume 6806 of LNCS, pages 585-591, Springer, 2011.
     \bibitem{parallel}
         Tange O.
         ``GNU Parallel - The Command-Line Power Tool'',
