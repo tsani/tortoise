@@ -681,13 +681,19 @@ undefined.
 These act as parameters which PRISM can then instantiate with concrete values
 following a specification.
 %
-However, PRISM does not make efficient use of multicore machines:
-models are checked serially.
-This makes model checking across a wide range of parameters prohibitively slow.
+However, parametric model checking is severely limited:
+parameters may only appear in transition probabilities, and not in update
+functions.
+%
+If this condition is satisfied, then graph of the model needs to be built only
+once, so parametric model checking is very fast.
+%
+In our case, we wish to vary the redistribution policy of the swarm, which
+inherently appears in an update function, so parametric model checking is sadly
+out of the question.
 
-Rather than use PRISM's built-in parametric model checking facilities, we
-extended the code generator to support the specification of \emph{all} the
-relevant properties for DPTs.
+Instead, we extended the code generator to support the specification of
+\emph{all} the relevant properties for DPTs.
 %
 In particular, our frontend supports specifying the number of robots in the
 swarm, the number of enemies and their difficulty ratings, the efficiency
