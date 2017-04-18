@@ -10,6 +10,7 @@
 *.toc
 /results/
 results.csv
+results-4.csv
 bin
 include
 lib
