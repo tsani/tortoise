@@ -155,7 +155,6 @@ approach using a discrete time Markov chain.
 Figure \ref{fig:foraging} shows their construction.
 
 \begin{figure}
-    \label{fig:foraging}
     \begin{center}
         \begin{tikzpicture}[
                 ->,
@@ -248,6 +247,7 @@ Figure \ref{fig:foraging} shows their construction.
         dropping all clock guards (of the form $t < T$ or $t \geq T$) yields a
         DTMC.
     }
+    \label{fig:foraging}
 \end{figure}
 
 The macroscopic representation of this robotic swarm shows that each robot is
@@ -462,8 +462,6 @@ that enemy can redistribute themselves
 over the remaining battles.
 
 \begin{figure}
-    \caption{Transition system representation battle $i$}
-    \label{tikz:battle}
     \begin{center}
         \begin{tikzpicture}
             \matrix[row sep=3cm,column sep=3cm]{
@@ -488,6 +486,10 @@ over the remaining battles.
             } ;
         \end{tikzpicture}
     \end{center}
+    \caption{
+        Transition system representation battle $i$.
+    }
+    \label{tikz:battle}
     \small
     \justify
     \par
@@ -597,7 +599,7 @@ let
     \}
 \end{equation*}
 %
-Our goal is to redistribute $ n_i $ bots among
+Our goal is to redistribute $ n_i $ robots among
 all $ j \in \mathcal{F} $.
 %
 For all $ j \in \mathcal{F} $, let $ d_j $ be enemy
@@ -725,9 +727,8 @@ entire swarm to the most difficult enemy is the optimal policy, given our
 choice of scaling function $g(x) = x^a$.
 
 \begin{figure}
-    \label{fig:some-all-battle-won}
     \begin{center}
-        \includegraphics{../figs/some-all-probability-vs-exp.png}
+        \includegraphics[width=\textwidth]{../figs/some-all-probability-vs-exp.png}
     \end{center}
     \caption{
         The probability that all battles are won and the probability that at
@@ -739,6 +740,29 @@ choice of scaling function $g(x) = x^a$.
         The efficiency of the robots is rated at $2$, and each unsuccessful
         round of combat has a $10\%$ chance of destroying a robot.
     }
+    \label{fig:some-all-battle-won}
+\end{figure}
+
+Figure \ref{fig:surface} demonstrates that our intuition is correct.
+Increasing the lethality rating of a battle decreases the probability of
+overall victory, and increasing the total number of robots increases the
+probability of overall victory.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../figs/prob-win-all-2-enemies-(25,200)-exp-2-85-eff-1-85.png}
+    \end{center}
+    \caption{
+        Increasing the number of robots increases the probability of overall
+        victory, and increasing the lethality rating of battle decreases the
+        probability of overall victory.
+        %
+        In this battle, two enemies, one of level 25, the other of level 200,
+        go up against a varying number robots.
+        The efficiency of the swarm is $2.85$ and the redistribution policy
+        parameter $a$ is fixed at $1.85$.
+    }
+    \label{fig:surface}
 \end{figure}
 
 \section{Conclusion}
@@ -790,6 +814,8 @@ would be to change our reallocation policy to
 allow for parametric model checking, which
 would vastly improve computation time and
 space requirements.
+
+\pagebreak
 
 \begin{thebibliography}{99}
     \bibitem{konur12}
