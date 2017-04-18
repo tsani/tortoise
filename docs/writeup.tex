@@ -743,10 +743,13 @@ choice of scaling function $g(x) = x^a$.
     \label{fig:some-all-battle-won}
 \end{figure}
 
-Figure \ref{fig:surface} demonstrates that our intuition is correct.
+Figures \ref{fig:surface} and \ref{fig:surface-2} demonstrate that our
+intuition is correct.
 Increasing the lethality rating of a battle decreases the probability of
 overall victory, and increasing the total number of robots increases the
 probability of overall victory.
+Similarly, these changes in the parameters affect the proportion of surviving
+robots as one would expect.
 
 \begin{figure}
     \begin{center}
@@ -763,6 +766,25 @@ probability of overall victory.
         parameter $a$ is fixed at $1.85$.
     }
     \label{fig:surface}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=\textwidth]{../figs/prob-10-90-survive-2-enemies-(25,200)-exp-2-85-eff-1-85.png}
+    \end{center}
+    \caption{
+        Increasing the swarm size increases the probability that more than 10\%
+        of the initial swarm survives and the probability that more than 90\%
+        of the initial swarm survives.
+        Increasing the lethality rating of battle decreases these survival
+        probabilities.
+        %
+        In this battle, two enemies, one of level 25, the other of level 200,
+        go up against a varying number robots.
+        The efficiency of the swarm is $2.85$ and the redistribution policy
+        parameter $a$ is fixed at $1.85$.
+    }
+    \label{fig:surface-2}
 \end{figure}
 
 \section{Conclusion}
