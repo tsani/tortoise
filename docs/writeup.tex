@@ -536,82 +536,72 @@ over the remaining battles.
     The description of the states follow.
 
     \begin{itemize}
-        \item $ p $ is the probability of defeating the current
+        \item $p$ is the probability of defeating the current
             enemy in a round of combat.
-        \item $ s_0 $ is the state in which all battles start.
+        \item $s_0$ is the state in which all battles start.
             The "init" action synchronizes across all
             battles, so the initial
             distribution of robots occurs at the same time
             across all battles.
-        \item $ s_1 $ is the "ready" state in which
+        \item $s_1$ is the "ready" state in which
             attacking can occur. When the "attack" action
             occurs, the battle can transition into
-            $ s_2 $ with probability $ p_i $, or
-            $ s_3 $ with probability $ 1 - p_i $.
+            $s_2$ with probability $p_i$, or
+            $s_3$ with probability $1 - p_i$.
         \item $ s_2 $ is the state representing the result
             of a non-victorious attack. Because
-            the transition back to $ s_1 $ does not
-            have a label, the return to $ s_1 $ is
+            the transition back to $s_1$ does not
+            have a label, the return to $s_1$ is
             performed non-synchronously by different battles.
             This is important later when we incorporate
             our notion of casualties in combat.
-        \item $ s_3 $ is the state representing the result
+        \item $s_3$ is the state representing the result
             of a victorious attack. The transition
-            leading from $ s_3 $ to $ s_4 $ contains
+            leading from $s_3$ to $s_4$ contains
             the reallocation of all robots in the
             current battle to all remaining battles.
-        \item $ s_4 $ is the state representing the
+        \item $s_4$ is the state representing the
             conclusion of a single battle.
-        \item $ s_5 $ is the state representing the
+        \item $s_5$ is the state representing the
             conclusion of all battles. This state
             can only be entered with the "done" action,
             which is synchronized across all battles.
     \end{itemize}
 
-    We call $ p_i $ the probability of a failed
-    attack in battle $ i $. This probability
+    We call $p_i$ the probability of a failed
+    attack in battle $i$. This probability
     is a function of the difficulty level $ d_i $,
-    efficiency of robots $ c $, and
-    the current number of robots $ n_i $ fighting
-    enemy $ i $.
+    efficiency of robots $c$, and
+    the current number of robots $n_i$ fighting
+    enemy $i$.
 \end{figure}
 
-In figure \ref{tikz:battle} we mention that the probability
-of a failed attack $ p_i $ in battle $ i $ is a function of the
-difficulty level of enemy $ i $ ($ d_i $),
-efficiency of robots ($c$), and
-the current number of robots $ n_i $ fighting enemy
-$ i $. Any function that produces a probability can be
-used, but in our implementation we use the cumulative
-distribution function (figure \ref{fig:exp-cdf}) of an exponential
-random variable for the probability of a successful attack.
+In figure \ref{tikz:battle} we mention that the probability of a failed attack
+$p_i$ in battle $i$ is a function of the difficulty level $d_i$ of enemy $i$,
+the efficiency $c$ of robots, and the number of robots $n_i$ fighting enemy
+$i$.
 %
-Thus, we use $ e^{-\lambda x} $ as the probability
-of a failed attack.
+In principle, any function that produces a probability can be used, but in our
+implementation we use the cumulative distribution function
+$f(x) = 1 - e^{-\lambda x}$ of an exponential random variable for the
+probability of a successful attack.
 %
-Intuitively, the probability of failed attack
-increases as the difficulty level of enemy increases.
-This is reflected as $ x $ is the difficulty level
-of the enemy. Then, we would like for efficiency of
-robots and the current number of robots to affect
-the probability of a failed attack. Again,
-intuitively, the probability of a failed attack
-decreases both as the number of robots attacking
-the enemy ($n_i$) and the efficiency of robots ($c$)
-increase. We encode this in the lambda
-parameter of the exponential c.d.f., by setting
-$ \lambda = \frac{1}{c n_i} $. This probability
-then updates whenever the total number of robots
-changes during updates, which occur when casualties
-are incurred or when a battle ends and its robots
-are redistributed.
-
-\begin{figure}
-    \caption{Cumulative distribution function of an exponential random variable with parameter $\lambda$}
-    \label{fig:exp-cdf}
-    \centering
-    $$ f(x) = 1 - e^{-\lambda x} $$
-\end{figure}
+Thus, we use $e^{-\lambda x}$ as the probability of a failed attack.
+%
+Intuitively, the probability of failed attack should increase as the difficulty
+level of enemy increases.
+This is reflected as $x$ is the difficulty level
+of the enemy.
+Then, we would like for efficiency of robots and the current number of robots
+to affect the probability of a failed attack.
+Again, intuitively, the probability of a failed attack decreases both as the
+number of robots attacking the enemy ($n_i$) and the efficiency of robots ($c$)
+increase.
+We encode this in the lambda parameter of the exponential c.d.f., by setting
+$\lambda = \frac{1}{c n_i}$.
+This probability then updates whenever the total number of robots changes
+during updates, which occur when casualties are incurred or when a battle ends
+and its robots are redistributed.
 
 After a battle concludes, the robots that were
 in that battle may redistribute over the remaining battles.
@@ -628,20 +618,28 @@ average of a function of the adjusted difficulty
 ($\frac{d_i}{c n_i}$ using our previous notation).
 
 In other words, when battle $ i $ has ended,
-let $ \mathcal{F} = \{ j \text{ s.t. } j \neq i \wedge \text{ Battle } j \text{ not ended.} \} $.
+let
+\begin{equation*}
+    \mathcal{F} = \{
+        j : \text{battle } j \text{ has not ended}
+    \}
+\end{equation*}
 %
 Our goal is to redistribute $ n_i $ bots among
 all $ j \in \mathcal{F} $.
 %
 For all $ j \in \mathcal{F} $, let $ d_j $ be enemy
 $j$'s difficulty level, and let $ n_j $ be the number
-of robots currently attacking $j$. Enemy j will
-receive:
-
-$$ n_i \frac{g(\frac{d_j}{cn_i})}{\displaystyle\sum_{k \in \mathcal{F}}g(\frac{l_k}{cn_k})} $$
-
-where $ g(x) $ is some scaling function that has at least
-one free variable in it that can be tuned.
+of robots currently attacking $j$.
+Enemy $j$ will receive:
+\begin{equation*}
+    n_i \frac{g(\frac{d_j}{c n_j})}{
+        {\displaystyle\sum_{k \in \mathcal{F}}}
+        g(\frac{l_k}{c n_k})}
+\end{equation*}
+%
+where $ g(x) $ is some scaling function that has at least one free variable in
+it that can be tuned.
 
 Then, this model along with the redistribution
 policy can be encoded in some model checking software
