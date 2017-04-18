@@ -712,17 +712,52 @@ code online\footnotemark.
 \section{Conclusion}
 \label{sec:conclusion}
 
-% Issues: Not enough parameters to allow for all
-% kinds of allocations.
-% Can't do this optimization in a reasonable amount
-% of time/space with more than 4 enemies.
-% Improvements: Same enemies -> use counter instead
-% of explicit composition.
-% 
-% PRISM has parametric model checking, which
-% would vastly speed up our process if it were
-% not the case that our parameters are all
-% involved in the updates.
+Despite experimental results that show some potential for this framework,
+there were numerous issues with our concrete implementation
+and with the model. There is also a key performance concern.
+
+The most obvious problem is that model checking
+with more than 3 composed transition systems results
+in a very highly resource and time intensive computation
+when constructing the model in PRISM and verifying
+properties. This is certainly not practical in a
+scenario where response time is critical. However,
+a potential improvement would be take the idea from
+the macroscopic representation of a robot swarm,
+and, if there are multiple enemies that have the same
+difficulty level, represent them as a single transition
+system with a counter that decrements when
+an enemy is defeated. Such a model
+could massively decrease the computational
+complexity.
+
+Furthermore, a simple scaling function $ g(x) $
+would not actually sufficient to be able to
+describe a wide variety of ways to reallocate
+robots: in using the scaling function $ g(x) = x^a $
+we see that it seems better to simply set
+$ a $ to as high a value as possible, as that
+seems to maximize all the probabilities of all
+of the desired properties. Indeed, it may not be the
+case that allocating all robots to the most
+difficult enemy is optimal. Thus we may need
+to reconsider how we represent a reallocation policy
+(e.g. by setting explicit weights on enemies
+instead of using a function of adjusted difficulty).
+
+Finally, PRISM supports parametric model checking,
+which if used could massively cut down the
+time for property verification, as the exhaustive
+model would not have to be constructed with
+each parameterization of the model. Unfortunately,
+with how our model is defined, the parameter
+that we vary (in the scaling function $ g(x) $)
+does not appear only in the transition probabilities;
+it appears in the updates. A potential improvement
+would be to change our reallocation policy to
+allow for parametric model checking, which
+would vastly improve computation time and
+space requirements.
 
 \section{References}
 
