@@ -13,6 +13,11 @@
 
 \theoremstyle{definition}
 \newtheorem{defn}{Definition}
+\renewcommand{\phi}{\varphi}
+\newcommand{\OR}{\mathbin{\big\vert}}
+\renewcommand{\P}[2]{\mathcal{P}_{#1}\left(#2\right)}
+\newcommand{\until}{\mathbin{\mathtt{U}}}
+\newcommand{\X}{\bigcirc}
 
 \begin{document}
 
@@ -238,72 +243,96 @@ Figure \ref{fig:foraging} shows their construction.
     }
 \end{figure}
 
-The macroscopic representation of this robotic swarm
-shows that each robot is responsible for attempting
-to gather ``food'' in order to increase the overall
-energy levels of the entire swarm. The semantics
-of the states are:
-
+The macroscopic representation of this robotic swarm shows that each robot is
+responsible for attempting to gather ``food'' in order to increase the overall
+energy levels of the entire swarm. The semantics of the states are:
+%
 \begin{description}
-    \item[Searching] Robot is searching for food
-    \item[Grabbing] Robot attempts to grab a food item
-    \item[Depositing] Robot returns home with the food item
-    \item[Homing] Robot returns home without any food items
-    \item[Resting] Robot rests for some time
+    \item[Searching.] Robot is searching for food.
+    \item[Grabbing.] Robot attempts to grab a food item.
+    \item[Depositing.] Robot returns home with the food item.
+    \item[Homing.] Robot returns home without any food items.
+    \item[Resting.] Robot rests for some time.
 \end{description}
 
 Then, there are some timeout conditions and probability
 distributions over states after a transition is performed.
-
+%
 \begin{itemize}
-    \item $ T_s $ is the maximum amount time a robot can continue searching.
-    \item $ T_g $ is the maximum amount of time a robot can attempt
-        grabbing
-    \item $ T_d = \frac{T_h}{T_r} $ is the average time spent depositing
-    \item $ \gamma_f $ is the probability of finding a food item
-    \item $ \gamma_g $ is the probability of grabbing a food item
-    \item $ \gamma_l $ is the probability of losing sight of a food
-        item.
+    \item
+        $ T_s $ is the maximum amount time a robot can continue searching.
+        %
+    \item
+        $ T_g $ is the maximum amount of time a robot can attempt grabbing.
+        %
+    \item
+        $ T_d = \frac{T_h}{T_r} $ is the average time spent depositing.
+        %
+    \item
+        $ \gamma_f $ is the probability of finding a food item.
+        %
+    \item
+        $ \gamma_g $ is the probability of grabbing a food item.
+        %
+    \item
+        $ \gamma_l $ is the probability of losing sight of a food item.
+        %
 \end{itemize}
 
-After including timeout conditions in the guards
-of transitions, the model as introduced by Konur, Dixon, and
-Fisher is actually a probabilistic timed automaton. However,
-ignoring the guards on clock values and removing all self-transitions
-with only clock guards on them and clock guards, we can consider this model
-exactly as a discrete time Markov chain. Then, we can see
-that a robot in the ``Searching'' state can probabilistically
-transition into either the ``Grabbing'' state, or continue to
-search for food items.
+After including timeout conditions in the guards of transitions, the model as
+introduced by Konur, Dixon, and Fisher is actually a probabilistic timed
+automaton.
+However, ignoring the guards on clock values and removing all self-transitions
+guarded only by clocks, we can consider this model exactly as a discrete time
+Markov chain.
+Then, we can see that a robot in the ``Searching'' state can probabilistically
+transition into either the ``Grabbing'' state, or continue to search for food
+items.
 
-Side effects are then added. Total swarm energy levels are increased
-with every unit of food deposited at home. Energy levels decrease
-steadily when actions are taken by individual
-robots. Now this model can then be used as a transition system in
-which properties can be verified.
+Reward structures can be added to this model to track the total swarm energy
+levels.
+Each time a food unit is deposited, the overall energy level increases.
+Whenever the robots perform actions such as searching for food or returning
+home, the overall energy level increases.
+This reward structure is used as a proxy for tracking the fuel levels of the
+individual robots, which cannot be directly measured due to the nature of the
+macroscopic approach.
+Nonetheless, properties such as ``With what probability does the overall fuel
+level reach zero?'' can be verified and can serve to inform whether the swarm
+behaves well in aggregate.
 
-After constructing such a model, they implemented it in the PRISM model checker
-(PRISM) to verify actual properties in this probabilistic domain, such
-as the probability that the total energy supply of the swarm
-falls below some level.
-
-The properties are written in Probabilistic Computation Tree
-Logic (PCTL) \cite{pctl}, which extend Computation Tree Logic (CTL)
-with the following syntax and semantics.
-
+These properties are written in Probabilistic Computation Tree Logic (PCTL)
+\cite{pctl}, which extends Computation Tree Logic (CTL) to talk about
+probabilities. As in ordinary CTL, probabilistic CTL separates
+\emph{state formulas}, denoted with capital Greek letters, and
+\emph{path formulas}, denoted with lowercase Greek letters.
+%
 \begin{align*}
-    s \vDash & \mathcal{P}_{\sim\lambda}(\phi_1 \text{ U } \phi_2) \\
-    s \vDash & \mathcal{P}_{\sim\lambda}(\square \phi) \\
-    \text{where } & \sim \in \{ >, <, \leq, \geq \} \\
-                  & \phi_i \text{ is a CTL formula.} \\
-                  & \lambda \text{ is a probability.} \\
+    \Phi &::= \text{true}
+        \OR a
+        \OR \Phi_1 \land \Phi_2
+        \OR \neg \Phi
+        \OR \P{\sim \lambda}{\phi} \\
+    \phi &::= \X \Phi \OR \Phi_1 \until \Phi_2
 \end{align*}
+%
+where $\sim$ is one of $>$, $<$, $\leq$, or $\geq$ and $\lambda \in [0,1]$ is
+a probability.
 
-The semantics of $ s \vDash \mathcal{P}_{\geq\lambda} ( \phi ) $ are
+The satisfaction of $\P{\geq\lambda}{\phi}$ is defined by
 ``s satisfies $ \mathcal{P}_{\geq\lambda} ( \phi ) $ iff s
 satisfies $ \phi $ with probability greater than or equal
 to $ \lambda $''.
 The $ >, <, \leq $ cases for $ \sim $ follow similarly.
+% TODO this explanation of satisfaction feels... *puts on sunglasses*
+% unsatisfying.
+
+Hence, the $\exists$ and $\forall$ path operators of ordinary CTL are subsumed
+by the probability path operator $\mathcal{P}$: existence of a path satisfying
+$\phi$ means there is nonzero probability of $\phi$; requiring that all paths
+satisfy $\phi$ means that $\phi$ is satisfied with probability $1$.
+
+% TODO revise below this point.
 
 PCTL properties can be written directly into PRISM, and
 given a model that supports the property (i.e. there is
