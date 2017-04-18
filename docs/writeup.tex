@@ -10,6 +10,7 @@
 \usepackage{ragged2e}
 \usepackage[margin=3.0cm]{geometry}
 \usepackage{hyperref}
+\usepackage{graphicx}
 \usetikzlibrary{automata, graphs, arrows}
 
 \theoremstyle{definition}
@@ -708,6 +709,31 @@ code online\footnotemark.
 
 \section{Experimental Results}
 \label{sec:results}
+
+Figure \ref{fig:some-all-battle-won} shows how the probability of some battle
+being won and the probability of all battles being won in a four-enemy scenario
+evolve as the redistribution policy is adjusted.
+%
+This plot suggests the somewhat disappointing result that simply allocating the
+entire swarm to the most difficult enemy is the optimal policy, given our
+choice of scaling function $g(x) = x^a$.
+
+\begin{figure}
+    \label{fig:some-all-battle-won}
+    \begin{center}
+        \includegraphics{../figs/some-all-probability-vs-exp.png}
+    \end{center}
+    \caption{
+        The probability that all battles are won and the probability that at
+        least one battle is won versus the choice of the parameter $a$ in the
+        redistribution policy function.
+        %
+        In this battle, four enemies go up against a swarm of $20$ robots.
+        The difficulty ratings of the enemies are $10$, $20$, $30$, and $40$.
+        The efficiency of the robots is rated at $2$, and each unsuccessful
+        round of combat has a $10\%$ chance of destroying a robot.
+    }
+\end{figure}
 
 \section{Conclusion}
 \label{sec:conclusion}
