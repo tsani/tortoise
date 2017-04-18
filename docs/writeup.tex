@@ -7,6 +7,7 @@
 \usepackage{tikz}
 \usepackage{amsthm,amsmath,amssymb}
 \usepackage{csquotes}
+\usepackage{ragged2e}
 \usepackage[margin=3.0cm]{geometry}
 \usepackage{hyperref}
 \usetikzlibrary{automata}
@@ -332,7 +333,8 @@ with the ith enemy having some difficulty
 rating $ r_i $ (measuring how difficult it is
 to defeat that enemy), how should we allocate our robots
 in order to optimize for some desired effect
-(e.g. fastest victory, fewest casualties?)
+(e.g. probability of victory, probability of maximum
+survival?)
 When considering the method by which we should allocate
 robots between enemies, it is important to realize
 that battles may conclude at different times, and
@@ -350,9 +352,9 @@ policy for enemies.
 
 Conceptually, we represent a combat scenario in the following way.
 
-We are given $ N $ robots and the set of enemies 
-$ M \subset \mathbb{N} \times \mathbb{N} $,
-where the first element of the tuple is the unique identifier 
+We are given $ N $ robots and the set of enemies
+$ M \subset \mathbb{N} \times \mathbb{R} $,
+where the first element of the tuple is the unique identifier
 of the enemy, and the second element is the difficulty level
 of the enemy. These $ N $ robots may be distributed
 in any way between all $ \abs{M} $ enemies.
@@ -372,31 +374,190 @@ that enemy can redistribute themselves
 over the remaining battles.
 
 \begin{figure}
-    \caption{Transition system representation of a single battle}
+    \caption{Transition system representation battle $ i $}
     \label{tikz:battle}
+    \centering
     \begin{tikzpicture}
-        \matrix[row sep=1cm,column sep=1cm]{
-            \node[draw=black,circle] (s0) {$s_0$} ; \&
-            \node[draw=black,circle] (s1) {$s_1$} ; \&
-            \node[draw=black,circle] (s3) {$s_3$} ; \&
-            \node[draw=black,circle] (s4) {$s_4$} ; \&
+        \matrix[row sep=3cm,column sep=3cm]{
+            \node[draw=black,circle] (s0) {$s_0$} ; &
+            \node[draw=black,circle] (s1) {$s_1$} ; &
+            \node[draw=black,circle] (s3) {$s_3$} ; &
+            \node[draw=black,circle] (s4) {$s_4$} ; &
             \node[draw=black,circle] (s5) {$s_5$} ; \\
-            \&
+            &
             \node[draw=black,circle] (s2) {$s_2$} ; \\
         } ;
 
         \graph[use existing nodes] {
-            s0 -> s1 ;
-            s1 ->[edge label={attack, $1 - p$}] s2 ;
-            s1 ->[edge label={attack, $ p $}] s3 ;
-            s2 -> s1;
+            s0 ->[edge label={init}] s1 ;
+            s1 ->[edge label={attack, $ p_i$},bend left=30] s2 ;
+            s1 ->[edge label={attack, $ 1 - p_i $}] s3 ;
+            s2 ->[bend left=30] s1;
             s3 -> s4;
-            s4 ->[edge label={attack}] s4;
+            s4 ->[edge label={attack},loop below] s4;
             s4 ->[edge label={done}] s5;
         } ;
 
     \end{tikzpicture}
+    \small
+    \justify
+    \par
+    Each battle is conducted concurrently. So once we
+    have observed the set of enemies, we can construct
+    a transition system that looks like this for each enemy,
+    and then construct the composed transition system.
+    %
+    In the composed transition systems, all labeled actions
+    must be performed synchronously between all
+    transition systems. These actions are "attack", "done", and "init".
+    %
+    Due to our assumption that rounds of combat
+    occur in discrete time, and are concurrent,
+    all attacks will occur in lockstep, and
+    we will assume that redistribution is instantaneous.
+
+    The description of the states follow.
+
+    \begin{itemize}
+        \item $ p $ is the probability of defeating the current
+            enemy in a round of combat.
+        \item $ s_0 $ is the state in which all battles start.
+            The "init" action synchronizes across all
+            battles, so the initial
+            distribution of robots occurs at the same time
+            across all battles.
+        \item $ s_1 $ is the "ready" state in which
+            attacking can occur. When the "attack" action
+            occurs, the battle can transition into
+            $ s_2 $ with probability $ p_i $, or
+            $ s_3 $ with probability $ 1 - p_i $.
+        \item $ s_2 $ is the state representing the result
+            of a non-victorious attack. Because
+            the transition back to $ s_1 $ does not
+            have a label, the return to $ s_1 $ is
+            performed non-synchronously by different battles.
+            This is important later when we incorporate
+            our notion of casualties in combat.
+        \item $ s_3 $ is the state representing the result
+            of a victorious attack. The transition
+            leading from $ s_3 $ to $ s_4 $ contains
+            the reallocation of all robots in the
+            current battle to all remaining battles.
+        \item $ s_4 $ is the state representing the
+            conclusion of a single battle.
+        \item $ s_5 $ is the state representing the
+            conclusion of all battles. This state
+            can only be entered with the "done" action,
+            which is synchronized across all battles.
+    \end{itemize}
+
+    We call $ p_i $ the probability of a failed
+    attack in battle $ i $. This probability
+    is a function of the difficulty level $ d_i $,
+    efficiency of robots $ c $, and
+    the current number of robots $ n_i $ fighting
+    enemy $ i $.
 \end{figure}
+
+In figure \ref{tikz:battle} we mention that the probability
+of a failed attack $ p_i $ in battle $ i $ is a function of the
+difficulty level of enemy $ i $ ($ d_i $),
+efficiency of robots ($c$), and
+the current number of robots $ n_i $ fighting enemy
+$ i $. Any function that produces a probability can be
+used, but in our implementation we use the cumulative
+distribution function (figure \ref{fig:exp-cdf}) of an exponential
+random variable for the probability of a successful attack.
+%
+Thus, we use $ e^{-\lambda x} $ as the probability
+of a failed attack.
+%
+Intuitively, the probability of failed attack
+increases as the difficulty level of enemy increases.
+This is reflected as $ x $ is the difficulty level
+of the enemy. Then, we would like for efficiency of
+robots and the current number of robots to affect
+the probability of a failed attack. Again,
+intuitively, the probability of a failed attack
+decreases both as the number of robots attacking
+the enemy ($n_i$) and the efficiency of robots ($c$)
+increase. We encode this in the lambda
+parameter of the exponential c.d.f., by setting
+$ \lambda = \frac{1}{c n_i} $. This probability
+then updates whenever the total number of robots
+changes during updates, which occur when casualties
+are incurred or when a battle ends and its robots
+are redistributed.
+
+\begin{figure}
+    \caption{Cumulative distribution function of an exponential random variable with parameter $\lambda$}
+    \label{fig:exp-cdf}
+    \centering
+    $$ f(x) = 1 - e^{-\lambda x} $$
+\end{figure}
+
+After a battle concludes, the robots that were
+in that battle may redistribute over the remaining battles.
+We would like for this redistribution policy
+to be agnostic in how it decides to reallocate
+bots given the remaining battles' difficulty
+levels and number of robots fighting at those battles.
+Furthermore, we would like for the redistribution
+policy to have some free variable(s) that can be
+tuned in order to optimize for certain properties.
+%
+So we define the redistribution policy as a weighted
+average of a function of the adjusted difficulty
+($\frac{d_i}{c n_i}$ using our previous notation).
+
+In other words, when battle $ i $ has ended,
+let $ \mathcal{F} = \{ j \text{ s.t. } j \neq i \wedge \text{ Battle } j \text{ not ended.} \} $.
+%
+Our goal is to redistribute $ n_i $ bots among
+all $ j \in \mathcal{F} $.
+%
+For all $ j \in \mathcal{F} $, let $ d_j $ be enemy
+$j$'s difficulty level, and let $ n_j $ be the number
+of robots currently attacking $j$. Enemy j will
+receive:
+
+$$ n_i \frac{g(\frac{d_j}{cn_i})}{\displaystyle\sum_{k \in \mathcal{F}}g(\frac{l_k}{cn_k})} $$
+
+where $ g(x) $ is some scaling function that has at least
+one free variable in it that can be tuned.
+
+Then, this model along with the redistribution
+policy can be encoded in some model checking software
+to calculate properties. Grid search or hill-climbing can
+then be used to find the optimal parameterization of
+the scaling function $ g(x) $.
+
+In our implementation, we use the scaling function
+$ g(x) = x^a $, where $ a $ is our free variable.
+However, realistically any non-negative function
+can be used.
+
+In order to more accurately capture a battle, we include
+the notion of casualties: if a battle is not won in a round
+of combat, then the robot swarm will suffer
+a single casualty with some probability $ p_c $.
+This parameter is also a parameter of the model
+that must be specified, like the efficiency of the robots.
+
+An example workflow would follow these steps:
+
+\begin{enumerate}
+    \item Select the properties whose probabilities
+        you would like to maximize
+    \item Construct the model by specifying
+        the set of enemies, number and efficiency of robots,
+        scaling function, and probability of casualty.
+    \item Calculate the probabilities of the
+        desired properties while iterating over
+        values of parameters for the scaling function.
+        Stop when a local maximum for the properties is
+        reached.
+\end{enumerate}
 
 \section{Experiment Implementation}
 \label{sec:implementation}
@@ -473,6 +634,11 @@ code online\footnotemark.
 % of time/space with more than 4 enemies.
 % Improvements: Same enemies -> use counter instead
 % of explicit composition.
+% 
+% PRISM has parametric model checking, which
+% would vastly speed up our process if it were
+% not the case that our parameters are all
+% involved in the updates.
 
 \section{References}
 
