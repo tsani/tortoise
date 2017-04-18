@@ -489,33 +489,33 @@ the robots that were originally fighting
 that enemy can redistribute themselves
 over the remaining battles.
 
-\begin{figure}
-    \caption{Transition system representation battle $ i $}
+\begin{figure}[ht]
+    \caption{Transition system representation battle $i$}
     \label{tikz:battle}
-    \centering
-    \begin{tikzpicture}
-        \matrix[row sep=3cm,column sep=3cm]{
-            \node[draw=black,circle] (s0) {$s_0$} ; &
-            \node[draw=black,circle] (s1) {$s_1$} ; &
-            \node[draw=black,circle] (s3) {$s_3$} ; &
-            \node[draw=black,circle] (s4) {$s_4$} ; \\
-            &
-            \node[draw=black,circle] (s2) {$s_2$} ; &
-            &
-            \node[draw=black,circle] (s5) {$s_5$} ; \\
-        } ;
+    \begin{center}
+        \begin{tikzpicture}
+            \matrix[row sep=3cm,column sep=3cm]{
+                \node[draw=black,circle] (s0) {$s_0$} ; &
+                \node[draw=black,circle] (s1) {$s_1$} ; &
+                \node[draw=black,circle] (s3) {$s_3$} ; &
+                \node[draw=black,circle] (s4) {$s_4$} ; \\
+                &
+                \node[draw=black,circle] (s2) {$s_2$} ; &
+                &
+                \node[draw=black,circle] (s5) {$s_5$} ; \\
+            } ;
 
-        \graph[use existing nodes] {
-            s0 ->[edge label={init}] s1 ;
-            s1 ->[edge label={attack, $ p_i$},bend left=30] s2 ;
-            s1 ->[edge label={attack, $ 1 - p_i $}] s3 ;
-            s2 ->[bend left=30] s1;
-            s3 -> s4;
-            s4 ->[edge label={attack},loop right] s4;
-            s4 ->[edge label={done}] s5;
-        } ;
-
-    \end{tikzpicture}
+            \graph[use existing nodes] {
+                s0 ->[edge label={init}] s1 ;
+                s1 ->[edge label={attack, $ p_i$},bend left=30] s2 ;
+                s1 ->[edge label={attack, $ 1 - p_i $}] s3 ;
+                s2 ->[bend left=30] s1;
+                s3 -> s4;
+                s4 ->[edge label={attack},loop right] s4;
+                s4 ->[edge label={done}] s5;
+            } ;
+        \end{tikzpicture}
+    \end{center}
     \small
     \justify
     \par
