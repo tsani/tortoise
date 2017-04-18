@@ -23,6 +23,7 @@
 \newcommand{\Paths}[1]{\operatorname{Paths}\left(#1\right)}
 
 \newcommand{\abs}[1]{\left\vert{#1}\right\vert}
+\renewcommand{\th}{\textsuperscript{th}}
 
 \begin{document}
 
@@ -388,70 +389,62 @@ cooperating agents, we define a more complex type of task.
     \end{itemize}
 \end{defn}
 
-We will focus our attention on homogeneous robot swarms 
-
-Examples of real-world tasks that roughly
-fit this model are:
-\begin{itemize}
-    \item
-        Combat scenarios with multiple enemies.  Robots are designated targets.
+Examples of real-world tasks that roughly fit this model are:
+%
+\begin{description}
+    \item[Combat.]
+        The swarm is divided to target several enemies concurrently.
         Multiple robots attacking the same target improves the chances of
         taking down a target in any given round of combat.
-    \item cryptocurrency mining. A mining pool
-        can allocate computational resources to
-        try and compute correct hashes to
-        obtain a block of a particular
-        cryptocurrency.
-    \item DDOS attack planning. A botnet's
-        output capacity (measured in bits/second)
-        can be allocated among different servers
-        to try and overload them.
-    \item search and rescue. Several collapsed
-        buildings can be considered different
-        adversaries, where fully exploring
-        and identifying rescue targets occurs
-        probabilistically due to uncertainty
-        in the layout of a collapsed building.
-        Cooperative search and rescue efforts improves
-        the likelihood of completing search efforts
-        in a building.
+        %
+    \item[Search and rescue.]
+        Several collapsed buildings can be considered different adversaries,
+        where fully exploring and identifying rescue targets occurs
+        probabilistically due to uncertainty in the layout of a collapsed
+        building.
+        Cooperative search and rescue efforts improves the likelihood of
+        completing search efforts within a building.
+        %
+    \item[Cryptocurrency mining.]
+        A mining pool can allocate computational resources across multiple
+        blockchains to maximize returns.
+        %
+    \item[DDOS attack planning.]
+        A botnet's output capacity (measured in bits/second) can be distributed
+        among different servers to try overloading them.
+        %
 \end{itemize}
 
 For the remainder of this paper, we primarily refer to the combat example when
 talking about our model.
 
-For DPTs, task allocation becomes an interesting
-problem.
-Specifically, given $N$ enemies,
-with the ith enemy having some difficulty
-rating $d_i$ (measuring how difficult it is
-to defeat that enemy), how should we allocate our robots
-in order to optimize for some desired effect
-(e.g. probability of victory, probability of maximum
-survival?)
-When considering the method by which we should allocate
-robots between enemies, it is important to realize
-that battles may conclude at different times, and
-thus it is important not only to specify how the
-swarm should \emph{initially} be allocated,
-but also how a group of robots should reallocate
-themselves when a battle is won. We treat this
-as an optimization problem and in section
-\ref{sec:model}, we construct a model that
-will allow us to produce an optimal allocation
-policy for enemies.
+For DPTs, task allocation becomes an interesting problem.
+%
+Specifically, given $N$ enemies, with the $i$\th enemy having a difficulty
+rating $d_i$, how should we allocate our robots in order to optimize for some
+desired effect, e.g. probability of victory, surviving number of robots, etc.?
+%
+When considering the method by which we should allocate robots between enemies,
+it is important to realize that battles may conclude at different times, and
+thus it is important not only to specify how the swarm should \emph{initially}
+be allocated, but also how a group of robots should reallocate themselves when
+a battle is won.
+%
+We treat this as an optimization problem and in section \ref{sec:model}, we
+construct a model that will allow us to produce an optimal allocation policy
+for enemies.
 
 \section{Model Construction}
 \label{sec:model}
 
 Conceptually, we represent a combat scenario in the following way.
 
-We are given $ N $ robots and the set of enemies
-$ M \subset \mathbb{N} \times \mathbb{R} $,
+We are given $N$ robots and the set of enemies
+$M \subset \mathbb{N} \times \mathbb{R}$,
 where the first element of the tuple is the unique identifier
 of the enemy, and the second element is the difficulty level
-of the enemy. These $ N $ robots may be distributed
-in any way between all $ \abs{M} $ enemies.
+of the enemy. These $N$ robots may be distributed
+in any way between all $\abs{M}$ enemies.
 
 We assume that rounds of combat occur concurrently in discrete time,
 and that in any given round of combat against a
@@ -616,40 +609,38 @@ Enemy $j$ will receive:
         g(\frac{l_k}{c n_k})}
 \end{equation*}
 %
-where $ g(x) $ is some scaling function that has at least one free variable in
+where $g(x)$ is some scaling function that has at least one free variable in
 it that can be tuned.
 
 Then, this model along with the redistribution
 policy can be encoded in some model checking software
 to calculate properties. Grid search or hill-climbing can
 then be used to find the optimal parameterization of
-the scaling function $ g(x) $.
+the scaling function $g(x)$.
 
-In our implementation, we use the scaling function
-$ g(x) = x^a $, where $ a $ is our free variable.
-However, realistically any non-negative function
-can be used.
+In our implementation, we use the scaling function $g(x) = x^a$,
+where $a$ is our free variable.
+However, realistically any non-negative function can be used.
 
 In order to more accurately capture a battle, we include
 the notion of casualties: if a battle is not won in a round
 of combat, then the robot swarm will suffer
-a single casualty with some probability $ p_c $.
+a single casualty with some probability $p_c$.
 This parameter is also a parameter of the model
 that must be specified, like the efficiency of the robots.
 
 An example workflow would follow these steps:
 
 \begin{enumerate}
-    \item Select the properties whose probabilities
-        you would like to maximize
-    \item Construct the model by specifying
-        the set of enemies, number and efficiency of robots,
-        scaling function, and probability of casualty.
-    \item Calculate the probabilities of the
-        desired properties while iterating over
-        values of parameters for the scaling function.
-        Stop when a local maximum for the properties is
-        reached.
+    \item
+        Select the properties whose probabilities you would like to maximize
+    \item
+        Construct the model by specifying the set of enemies, number and
+        efficiency of robots, scaling function, and probability of casualty.
+    \item
+        Calculate the probabilities of the desired properties while iterating
+        over values of parameters for the scaling function.
+        Stop when a local maximum for the properties is reached.
 \end{enumerate}
 
 \section{Experiment Implementation}
