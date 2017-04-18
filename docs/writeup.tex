@@ -17,8 +17,10 @@
 \renewcommand{\phi}{\varphi}
 \newcommand{\OR}{\mathbin{\big\vert}}
 \renewcommand{\P}[2]{\mathcal{P}_{#1}\left(#2\right)}
-\newcommand{\until}{\mathbin{\mathtt{U}}}
+\newcommand{\until}{\mathbin{\mathsf{U}}}
 \newcommand{\X}{\bigcirc}
+\renewcommand{\models}{\vDash}
+\newcommand{\Paths}[1]{\operatorname{Paths}\left(#1\right)}
 
 \newcommand{\abs}[1]{\left\vert{#1}\right\vert}
 
@@ -319,95 +321,74 @@ probabilities. As in ordinary CTL, probabilistic CTL separates
     \phi &::= \X \Phi \OR \Phi_1 \until \Phi_2
 \end{align*}
 %
-where $\sim$ is one of $>$, $<$, $\leq$, or $\geq$ and $\lambda \in [0,1]$ is
-a probability.
+where $\sim$ is one of $>$, $<$, $\leq$, or $\geq$;
+$\lambda \in [0,1]$ is a probability;
+and $a$ is an atomic proposition.
 
-The satisfaction of $\P{\geq\lambda}{\phi}$ is defined by
-``s satisfies $ \mathcal{P}_{\geq\lambda} ( \phi ) $ iff s
-satisfies $ \phi $ with probability greater than or equal
-to $ \lambda $''.
-The $ >, <, \leq $ cases for $ \sim $ follow similarly.
-% TODO this explanation of satisfaction feels... *puts on sunglasses*
-% unsatisfying.
-
+We say that $s \models \P{\geq\lambda}{\phi}$
+if $\pi \in \Paths{s}$ is such that $\pi \models \phi$ with probability at
+least $\lambda$.
+The cases for $ >, <, \leq $ follow similarly.
+%
 Hence, the $\exists$ and $\forall$ path operators of ordinary CTL are subsumed
-by the probability path operator $\mathcal{P}$: existence of a path satisfying
-$\phi$ means there is nonzero probability of $\phi$; requiring that all paths
-satisfy $\phi$ means that $\phi$ is satisfied with probability $1$.
-
-% TODO revise below this point.
-
-PCTL properties can be written directly into PRISM, and
-given a model that supports the property (i.e. there is
-no variable in the property that is not mentioned
-in the model) such a property can be verified.
-PRISM supports an additional feature: if the $ \lambda $
-parameter is not specified in the property, then
-instead saying if the property is satisfied or not
-satisfied, PRISM will return the probability that
-the property is specified. For example, Konur,
-Dixon, and Fisher demonstrate the computation of
-the probability that ``for an arbitrary number of robots
-and food finding probability, the swarm energy is
-equal to or greater than the initial energy from
-a time point $ t_A $.'' This property can be written
-in PCTL as:
-
+by the probability path operator $\mathcal{P}$:
+%
 \begin{align*}
-    P_{=?}((t < t_A) & \vee (E(t) \geq E(0)) \text{ U } t = t_{max} ) \\
-    \text{where } & t \text{ is the time variable} \\
-                  & t_A \text{ is the designated time point} \\
-                  & t_{max} \text{ is the simulation end time} \\
-                  & E(t) \text{ is the function returning the energy at time } t
+    \exists \phi &\equiv \P{>0}{\phi} \\
+    \forall \phi &\equiv \P{\geq 1}{\phi}
 \end{align*}
 
-Thus by constructing a swarm robotics in this way,
-PCTL properties can be used to verify probabilistic
-properties.
+PCTL state formulas can be written in the PRISM property language and checked
+against a model.
+PRISM supports an additional feature, namely that given a path formula $\phi$,
+it can compute the probability of that formula being satisfied in a given
+starting state.
+For example, Konur, Dixon, and Fisher demonstrate the computation of the
+probability that ``for an arbitrary number of robots and food finding
+probability, the swarm energy is equal to or greater than the initial energy
+from a time point $ t_A $.''
+%
+\begin{equation*}
+    P_{=?}((t < t_A) \lor (E(t) \geq E(0)) \until t = t_\text{max} )
+\end{equation*}
+%
+where
+$t$ is the time variable,
+$t_A$ is a particular time point,
+$t_\text{max}$ is the simulation end time, and
+$E(t)$ is the function expressing the swarm energy at time.
 
-We observe that this foraging task, however, does
-not fully leverage the unique capabilities of
-a robot swarm. Specifically, the ability
-to aggregate and disaggregate. The foraging
-task essentially segregates all robots from
-each other, and assumes they can act
-independently. Furthermore, it does not
-consider the possibility for robots to
-cooperate with each other to increase
-the probability of successfully completing
-some task. Because real-world tasks will,
-more often than not, be more complex than
-the independent foraging task, we define
-another slightly more complex type of task
-along with real world examples of such tasks.
+This foraging example, however, does not fully leverage the unique
+capabilities of a robot swarm.
+Specifically, the robots act independently:
+having multiple robots in the ``Searching'' state at once does not affect the
+outcome of foraging in any interesting way.
+Since many real-world tasks benefit from being performed concurrently by
+cooperating agents, we define a more complex type of task.
 
 \begin{defn}
-    A \emph{distributable probabilistic task}
-    (DPT) is a task (in a discrete time domain)
-    where:
-
+    A \emph{distributable probabilistic task} (DPT) is a task in a discrete
+    time domain where:
+    %
     \begin{itemize}
-        \item completion of the task by
-            the agents working on it
-            occurs probabilistically in
-            each time step
-        \item cooperation of agents working
-            on the same task increases the
-            completion probability
-        \item agents can work on multiple
-            tasks concurrently
-        \item the tasks may be of different
-            difficulty
-        \item after completion of a task,
-            the agents that were originally
-            working on that task may
-            redistribute themselves
-            among the remaining active tasks.
+        \item
+            completion of the task by the agents working on it occurs
+            probabilistically in each time step;
+        \item
+            cooperation of agents working on the same task affects the
+            completion probability;
+        \item
+            multiple tasks may be worked on concurrently, and may be completed
+            in any order;
+        \item
+            the tasks may have difficulties;
+        \item
+            once a task is completed, the agents working on it may move to help
+            with the remaining incomplete tasks.
     \end{itemize}
-
-    We also assume that the swarm robots
-    are homogeneous.
 \end{defn}
+
+We will focus our attention on homogeneous robot swarms 
 
 Examples of real-world tasks that roughly
 fit this model are:
